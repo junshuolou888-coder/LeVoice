@@ -35,7 +35,12 @@ class SherpaSpeechRecognizer(
     @Volatile
     private var recognizer: OnlineRecognizer? = null
 
-    fun initialize() {
+    private var hotwords: String = ""
+    private var hotwordsScore: Float = 8.0f
+
+    fun initialize(hotwords: String, hotwordsScore: Float) {
+        this.hotwords = hotwords
+        this.hotwordsScore = hotwordsScore
         executor.execute {
             try {
                 val modelDir =
@@ -67,7 +72,7 @@ class SherpaSpeechRecognizer(
                     enableEndpoint = true,
                     decodingMethod = "modified_beam_search",
                     maxActivePaths = 4,
-                    hotwordsScore = 2.0f,
+                    hotwordsScore = this.hotwordsScore,
                 )
                 recognizer = OnlineRecognizer(
                     assetManager = context.assets,
@@ -118,7 +123,7 @@ class SherpaSpeechRecognizer(
             listener.onListeningChanged(false)
             return
         }
-        val stream = currentRecognizer.createStream(HOTWORDS)
+        val stream = currentRecognizer.createStream(hotwords)
         var recorder: AudioRecord? = null
         var finalText = ""
 
@@ -212,18 +217,5 @@ class SherpaSpeechRecognizer(
     private companion object {
         const val SAMPLE_RATE = 16_000
         const val CHUNK_SAMPLES = 1_600
-
-        val HOTWORDS = """
-            打 开 设 置
-            打 开 网 络 设 置
-            打 开 蓝 牙 设 置
-            打 开 声 音 设 置
-            打 开 显 示 设 置
-            应 用 管 理
-            返 回 主 页
-            增 大 音 量
-            减 小 音 量
-            静 音
-        """.trimIndent()
     }
 }

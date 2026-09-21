@@ -1,0 +1,107 @@
+{
+  "version": 1,
+  "hotwordsScore": 8.0,
+  "commands": [
+    {
+      "id": "open_network_settings",
+      "displayName": "打开网络设置",
+      "keywords": ["网络设置", "网路设置", "wifi设置", "无线设置", "打开网络", "打开网路", "打开wifi", "打开无线"],
+      "hotwords": ["打 开 网 络 设 置"],
+      "action": {
+        "type": "intent",
+        "intentAction": "android.settings.WIFI_SETTINGS"
+      }
+    },
+    {
+      "id": "open_bluetooth_settings",
+      "displayName": "打开蓝牙设置",
+      "keywords": ["蓝牙"],
+      "hotwords": ["打 开 蓝 牙 设 置"],
+      "action": {
+        "type": "intent",
+        "intentAction": "android.settings.BLUETOOTH_SETTINGS"
+      }
+    },
+    {
+      "id": "toggle_mute",
+      "displayName": "切换静音",
+      "keywords": ["取消静音", "解除静音", "静音", "闭音"],
+      "hotwords": ["静 音"],
+      "action": {
+        "type": "builtin",
+        "builtinAction": "toggle_mute"
+      }
+    },
+    {
+      "id": "volume_up",
+      "displayName": "增大音量",
+      "keywords": ["增大音量", "调大音量", "音量调大", "音量大一点", "提高音量", "调大声音"],
+      "hotwords": ["增 大 音 量"],
+      "action": {
+        "type": "builtin",
+        "builtinAction": "volume_up"
+      }
+    },
+    {
+      "id": "volume_down",
+      "displayName": "减小音量",
+      "keywords": ["减小音量", "调小音量", "音量调小", "音量小一点", "降低音量", "调小声音"],
+      "hotwords": ["减 小 音 量"],
+      "action": {
+        "type": "builtin",
+        "builtinAction": "volume_down"
+      }
+    },
+    {
+      "id": "open_sound_settings",
+      "displayName": "打开声音设置",
+      "keywords": ["声音设置", "音频设置", "打开声音", "打开音频"],
+      "hotwords": ["打 开 声 音 设 置"],
+      "action": {
+        "type": "intent",
+        "intentAction": "android.settings.SOUND_SETTINGS"
+      }
+    },
+    {
+      "id": "open_display_settings",
+      "displayName": "打开显示设置",
+      "keywords": ["显示设置", "屏幕设置", "画面设置", "打开显示", "打开屏幕", "打开画面"],
+      "hotwords": ["打 开 显 示 设 置"],
+      "action": {
+        "type": "intent",
+        "intentAction": "android.settings.DISPLAY_SETTINGS"
+      }
+    },
+    {
+      "id": "open_app_settings",
+      "displayName": "打开应用管理",
+      "keywords": ["应用设置", "应用管理", "打开应用"],
+      "hotwords": ["应 用 管 理"],
+      "action": {
+        "type": "intent",
+        "intentAction": "android.settings.APPLICATION_SETTINGS"
+      }
+    },
+    {
+      "id": "go_home",
+      "displayName": "返回主页",
+      "keywords": ["返回主页", "回到主页", "返回桌面", "回到桌面"],
+      "hotwords": ["返 回 主 页"],
+      "action": {
+        "type": "builtin",
+        "builtinAction": "go_home"
+      }
+    },
+    {
+      "id": "open_settings",
+      "displayName": "打开系统设置",
+      "keywords": ["打开设置", "系统设置", "进入设置"],
+      "endsWith": "设置",
+      "hotwords": ["打 开 设 置"],
+      "action": {
+        "type": "intent",
+        "intentAction": "android.settings.SETTINGS"
+      }
+    }
+  ]
+}

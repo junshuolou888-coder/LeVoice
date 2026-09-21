@@ -2,13 +2,8 @@ package com.localvoicetv
 
 import android.Manifest
 import android.app.Activity
-import android.content.ActivityNotFoundException
-import android.content.Context
-import android.content.Intent
 import android.content.pm.PackageManager
-import android.media.AudioManager
 import android.os.Bundle
-import android.provider.Settings
 import android.view.WindowManager
 import android.widget.Button
 import android.widget.TextView
@@ -16,9 +11,13 @@ import android.widget.TextView
 class MainActivity : Activity(), SherpaSpeechRecognizer.Listener {
     private lateinit var statusText: TextView
     private lateinit var transcriptText: TextView
+    private lateinit var commandsText: TextView
     private lateinit var listenButton: Button
     private lateinit var settingsButton: Button
     private lateinit var speechRecognizer: SherpaSpeechRecognizer
+
+    private lateinit var registry: CommandRegistry
+    private lateinit var executor: CommandExecutor
 
     @Volatile
     private var modelReady = false
@@ -29,8 +28,17 @@ class MainActivity : Activity(), SherpaSpeechRecognizer.Listener {
 
         statusText = findViewById(R.id.statusText)
         transcriptText = findViewById(R.id.transcriptText)
+        commandsText = findViewById(R.id.commandsText)
         listenButton = findViewById(R.id.listenButton)
         settingsButton = findViewById(R.id.settingsButton)
+
+        // Load command config and create registry + executor
+        val config = CommandConfigLoader.load(applicationContext)
+        registry = CommandRegistry(config)
+        executor = CommandExecutor(this)
+
+        // Update the "你可以这样说" panel from config
+        commandsText.text = registry.allDisplayNames().joinToString("　·　")
 
         listenButton.isEnabled = false
         listenButton.setOnClickListener {
@@ -42,11 +50,22 @@ class MainActivity : Activity(), SherpaSpeechRecognizer.Listener {
             }
         }
         settingsButton.setOnClickListener {
-            executeCommand(VoiceCommand.OPEN_SETTINGS)
+            val settingsAction = CommandAction(
+                type = "intent",
+                intentAction = "android.settings.SETTINGS",
+            )
+            try {
+                executor.execute(settingsAction)
+            } catch (e: Exception) {
+                statusText.text = getString(R.string.command_failed, e.message)
+            }
         }
 
         speechRecognizer = SherpaSpeechRecognizer(applicationContext, this)
-        speechRecognizer.initialize()
+        speechRecognizer.initialize(
+            hotwords = registry.buildHotwords(),
+            hotwordsScore = registry.hotwordsScore(),
+        )
     }
 
     override fun onDestroy() {
@@ -105,11 +124,19 @@ class MainActivity : Activity(), SherpaSpeechRecognizer.Listener {
     override fun onFinalResult(text: String) {
         runOnUiThread {
             transcriptText.text = getString(R.string.recognized_format, text)
-            val command = VoiceCommandParser.parse(text)
-            if (command == null) {
+            val entry = registry.match(text)
+            if (entry == null) {
                 statusText.text = getString(R.string.command_not_understood, text)
             } else {
-                executeCommand(command)
+                try {
+                    executor.execute(entry.action)
+                    statusText.text = getString(R.string.status_executed, entry.displayName)
+                } catch (e: Exception) {
+                    statusText.text = getString(
+                        R.string.command_failed,
+                        e.message ?: entry.displayName,
+                    )
+                }
             }
         }
     }
@@ -149,82 +176,6 @@ class MainActivity : Activity(), SherpaSpeechRecognizer.Listener {
         if (!modelReady) return
         transcriptText.setText(R.string.recognized_placeholder)
         speechRecognizer.startListening()
-    }
-
-    private fun executeCommand(command: VoiceCommand) {
-        try {
-            when (command) {
-                VoiceCommand.OPEN_NETWORK_SETTINGS ->
-                    startActivity(Intent(Settings.ACTION_WIFI_SETTINGS))
-
-                VoiceCommand.OPEN_BLUETOOTH_SETTINGS ->
-                    startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS))
-
-                VoiceCommand.OPEN_SOUND_SETTINGS ->
-                    startActivity(Intent(Settings.ACTION_SOUND_SETTINGS))
-
-                VoiceCommand.OPEN_DISPLAY_SETTINGS ->
-                    startActivity(Intent(Settings.ACTION_DISPLAY_SETTINGS))
-
-                VoiceCommand.OPEN_APP_SETTINGS ->
-                    startActivity(Intent(Settings.ACTION_APPLICATION_SETTINGS))
-
-                VoiceCommand.OPEN_SETTINGS ->
-                    startActivity(Intent(Settings.ACTION_SETTINGS))
-
-                VoiceCommand.GO_HOME -> {
-                    val homeIntent = Intent(Intent.ACTION_MAIN)
-                        .addCategory(Intent.CATEGORY_HOME)
-                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    startActivity(homeIntent)
-                }
-
-                VoiceCommand.VOLUME_UP ->
-                    adjustVolume(AudioManager.ADJUST_RAISE)
-
-                VoiceCommand.VOLUME_DOWN ->
-                    adjustVolume(AudioManager.ADJUST_LOWER)
-
-                VoiceCommand.TOGGLE_MUTE ->
-                    adjustVolume(AudioManager.ADJUST_TOGGLE_MUTE)
-            }
-            statusText.text = getString(R.string.status_executed, command.displayName())
-        } catch (error: ActivityNotFoundException) {
-            statusText.text = getString(
-                R.string.command_failed,
-                error.message ?: command.displayName(),
-            )
-        } catch (error: SecurityException) {
-            statusText.text = getString(
-                R.string.command_failed,
-                error.message ?: command.displayName(),
-            )
-        }
-    }
-
-    private fun adjustVolume(direction: Int) {
-        val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
-        audioManager.adjustStreamVolume(
-            AudioManager.STREAM_MUSIC,
-            direction,
-            AudioManager.FLAG_SHOW_UI,
-        )
-    }
-
-    private fun VoiceCommand.displayName(): String {
-        val resource = when (this) {
-            VoiceCommand.OPEN_NETWORK_SETTINGS -> R.string.command_open_network
-            VoiceCommand.OPEN_BLUETOOTH_SETTINGS -> R.string.command_open_bluetooth
-            VoiceCommand.OPEN_SOUND_SETTINGS -> R.string.command_open_sound
-            VoiceCommand.OPEN_DISPLAY_SETTINGS -> R.string.command_open_display
-            VoiceCommand.OPEN_APP_SETTINGS -> R.string.command_open_apps
-            VoiceCommand.OPEN_SETTINGS -> R.string.command_open_settings
-            VoiceCommand.GO_HOME -> R.string.command_home
-            VoiceCommand.VOLUME_UP -> R.string.command_volume_up
-            VoiceCommand.VOLUME_DOWN -> R.string.command_volume_down
-            VoiceCommand.TOGGLE_MUTE -> R.string.command_mute
-        }
-        return getString(resource)
     }
 
     private companion object {
