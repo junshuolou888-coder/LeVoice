@@ -1,12 +1,516 @@
 {
-  "version": 1,
+  "version": 2,
   "hotwordsScore": 8.0,
   "commands": [
     {
+      "id": "open_desktop_home",
+      "displayName": "首页",
+      "keywords": [
+        "首页",
+        "轮播台",
+        "宽带电视",
+        "联播",
+        "打开首页",
+        "切换首页",
+        "打开轮播台",
+        "切换轮播台",
+        "打开宽带电视",
+        "切换宽带电视",
+        "打开联播",
+        "切换联播"
+      ],
+      "hotwords": [
+        "首 页",
+        "轮 播 台",
+        "宽 带 电 视",
+        "联 播"
+      ],
+      "action": {
+        "type": "intent",
+        "intentPackage": "com.stv.deskplatform",
+        "intentClass": "com.stv.deskplatform.ui.activity.ExternalJumpActivity",
+        "intentExtras": {
+          "toDesktopName": "com.letv.android.tv.letvlive"
+        }
+      }
+    },
+    {
+      "id": "open_desktop_video2",
+      "displayName": "精选",
+      "keywords": [
+        "精选",
+        "主页",
+        "精选桌面",
+        "打开精选",
+        "切换精选",
+        "打开主页",
+        "切换主页",
+        "打开精选桌面",
+        "切换精选桌面"
+      ],
+      "hotwords": [
+        "精 选",
+        "主 页"
+      ],
+      "action": {
+        "type": "intent",
+        "intentAction": "com.stv.launcher.action.start",
+        "intentExtras": {
+          "type": "1",
+          "value": "{\"pluginid\":\"com.stv.template.video2\"}"
+        }
+      }
+    },
+    {
+      "id": "open_desktop_kids",
+      "displayName": "儿童",
+      "keywords": [
+        "儿童",
+        "儿童桌面",
+        "打开儿童",
+        "切换儿童",
+        "打开儿童桌面",
+        "切换儿童桌面"
+      ],
+      "hotwords": [
+        "儿 童"
+      ],
+      "action": {
+        "type": "intent",
+        "intentAction": "com.stv.launcher.action.start",
+        "intentExtras": {
+          "type": "1",
+          "value": "{\"pluginid\":\"com.stv.template.kids\"}"
+        }
+      }
+    },
+    {
+      "id": "open_desktop_teleplay",
+      "displayName": "电视剧",
+      "keywords": [
+        "电视剧",
+        "电视剧桌面",
+        "打开电视剧",
+        "切换电视剧",
+        "打开电视剧桌面",
+        "切换电视剧桌面"
+      ],
+      "hotwords": [
+        "电 视 剧"
+      ],
+      "action": {
+        "type": "intent",
+        "intentAction": "com.stv.launcher.action.start",
+        "intentExtras": {
+          "type": "1",
+          "value": "{\"pluginid\":\"com.stv.template.teleplay\"}"
+        }
+      }
+    },
+    {
+      "id": "open_desktop_movie",
+      "displayName": "电影",
+      "keywords": [
+        "电影",
+        "电影桌面",
+        "打开电影",
+        "切换电影",
+        "打开电影桌面",
+        "切换电影桌面"
+      ],
+      "hotwords": [
+        "电 影"
+      ],
+      "action": {
+        "type": "intent",
+        "intentAction": "com.stv.launcher.action.start",
+        "intentExtras": {
+          "type": "1",
+          "value": "{\"pluginid\":\"com.stv.template.movie\"}"
+        }
+      }
+    },
+    {
+      "id": "open_desktop_variety",
+      "displayName": "综艺",
+      "keywords": [
+        "综艺",
+        "综艺桌面",
+        "打开综艺",
+        "切换综艺",
+        "打开综艺桌面",
+        "切换综艺桌面"
+      ],
+      "hotwords": [
+        "综 艺"
+      ],
+      "action": {
+        "type": "intent",
+        "intentAction": "com.stv.launcher.action.start",
+        "intentExtras": {
+          "type": "1",
+          "value": "{\"pluginid\":\"com.stv.template.variety\"}"
+        }
+      }
+    },
+    {
+      "id": "open_desktop_comic",
+      "displayName": "动漫",
+      "keywords": [
+        "动漫",
+        "动漫桌面",
+        "打开动漫",
+        "切换动漫",
+        "打开动漫桌面",
+        "切换动漫桌面"
+      ],
+      "hotwords": [
+        "动 漫"
+      ],
+      "action": {
+        "type": "intent",
+        "intentAction": "com.stv.launcher.action.start",
+        "intentExtras": {
+          "type": "1",
+          "value": "{\"pluginid\":\"com.stv.template.comic\"}"
+        }
+      }
+    },
+    {
+      "id": "open_desktop_changba",
+      "displayName": "唱吧",
+      "keywords": [
+        "唱吧",
+        "唱吧桌面",
+        "打开唱吧",
+        "切换唱吧",
+        "打开唱吧桌面",
+        "切换唱吧桌面"
+      ],
+      "hotwords": [
+        "唱 吧"
+      ],
+      "action": {
+        "type": "intent",
+        "intentAction": "com.stv.launcher.action.start",
+        "intentExtras": {
+          "type": "1",
+          "value": "{\"pluginid\":\"com.stv.template.changba\"}"
+        }
+      }
+    },
+    {
+      "id": "open_desktop_courseshop",
+      "displayName": "知识到家",
+      "keywords": [
+        "知识到家",
+        "知识到家桌面",
+        "打开知识到家",
+        "切换知识到家",
+        "打开知识到家桌面",
+        "切换知识到家桌面"
+      ],
+      "hotwords": [
+        "知 识 到 家"
+      ],
+      "action": {
+        "type": "intent",
+        "intentAction": "com.stv.launcher.action.start",
+        "intentExtras": {
+          "type": "1",
+          "value": "{\"pluginid\":\"com.stv.template.courseshop\"}"
+        }
+      }
+    },
+    {
+      "id": "open_desktop_school",
+      "displayName": "教育",
+      "keywords": [
+        "教育",
+        "教育桌面",
+        "打开教育",
+        "切换教育",
+        "打开教育桌面",
+        "切换教育桌面"
+      ],
+      "hotwords": [
+        "教 育"
+      ],
+      "action": {
+        "type": "intent",
+        "intentAction": "com.stv.launcher.action.start",
+        "intentExtras": {
+          "type": "1",
+          "value": "{\"pluginid\":\"com.stv.template.school\"}"
+        }
+      }
+    },
+    {
+      "id": "open_desktop_app",
+      "displayName": "应用",
+      "keywords": [
+        "应用",
+        "应用桌面",
+        "打开应用",
+        "切换应用",
+        "打开应用桌面",
+        "切换应用桌面"
+      ],
+      "hotwords": [
+        "应 用"
+      ],
+      "action": {
+        "type": "intent",
+        "intentAction": "com.stv.launcher.action.start",
+        "intentExtras": {
+          "type": "1",
+          "value": "{\"pluginid\":\"com.stv.template.app\"}"
+        }
+      }
+    },
+    {
+      "id": "open_desktop_kugou",
+      "displayName": "音乐",
+      "keywords": [
+        "音乐",
+        "音乐桌面",
+        "打开音乐",
+        "切换音乐",
+        "打开音乐桌面",
+        "切换音乐桌面"
+      ],
+      "hotwords": [
+        "音 乐"
+      ],
+      "action": {
+        "type": "intent",
+        "intentAction": "com.stv.launcher.action.start",
+        "intentExtras": {
+          "type": "1",
+          "value": "{\"pluginid\":\"com.stv.template.kugou\"}"
+        }
+      }
+    },
+    {
+      "id": "open_desktop_cloudgame",
+      "displayName": "腾讯云游戏",
+      "keywords": [
+        "腾讯云游戏",
+        "腾讯云游戏桌面",
+        "打开腾讯云游戏",
+        "切换腾讯云游戏",
+        "打开腾讯云游戏桌面",
+        "切换腾讯云游戏桌面"
+      ],
+      "hotwords": [
+        "腾 讯 云 游 戏"
+      ],
+      "action": {
+        "type": "intent",
+        "intentAction": "com.stv.launcher.action.start",
+        "intentExtras": {
+          "type": "1",
+          "value": "{\"pluginid\":\"com.stv.template.cloudgame\"}"
+        }
+      }
+    },
+    {
+      "id": "open_desktop_documentary",
+      "displayName": "纪录片",
+      "keywords": [
+        "纪录片",
+        "纪录片桌面",
+        "打开纪录片",
+        "切换纪录片",
+        "打开纪录片桌面",
+        "切换纪录片桌面"
+      ],
+      "hotwords": [
+        "纪 录 片"
+      ],
+      "action": {
+        "type": "intent",
+        "intentAction": "com.stv.launcher.action.start",
+        "intentExtras": {
+          "type": "1",
+          "value": "{\"pluginid\":\"com.stv.template.documentary\"}"
+        }
+      }
+    },
+    {
+      "id": "open_desktop_game",
+      "displayName": "游戏电竞",
+      "keywords": [
+        "游戏电竞",
+        "游戏电竞桌面",
+        "打开游戏电竞",
+        "切换游戏电竞",
+        "打开游戏电竞桌面",
+        "切换游戏电竞桌面"
+      ],
+      "hotwords": [
+        "游 戏 电 竞"
+      ],
+      "action": {
+        "type": "intent",
+        "intentAction": "com.stv.launcher.action.start",
+        "intentExtras": {
+          "type": "1",
+          "value": "{\"pluginid\":\"com.stv.template.game\"}"
+        }
+      }
+    },
+    {
+      "id": "open_desktop_health",
+      "displayName": "健康养生",
+      "keywords": [
+        "健康养生",
+        "健康养生桌面",
+        "打开健康养生",
+        "切换健康养生",
+        "打开健康养生桌面",
+        "切换健康养生桌面"
+      ],
+      "hotwords": [
+        "健 康 养 生"
+      ],
+      "action": {
+        "type": "intent",
+        "intentAction": "com.stv.launcher.action.start",
+        "intentExtras": {
+          "type": "1",
+          "value": "{\"pluginid\":\"com.stv.template.health\"}"
+        }
+      }
+    },
+    {
+      "id": "open_desktop_combine",
+      "displayName": "聚合",
+      "keywords": [
+        "聚合",
+        "聚合桌面",
+        "打开聚合",
+        "切换聚合",
+        "打开聚合桌面",
+        "切换聚合桌面"
+      ],
+      "hotwords": [
+        "聚 合"
+      ],
+      "action": {
+        "type": "intent",
+        "intentAction": "com.stv.launcher.action.start",
+        "intentExtras": {
+          "type": "1",
+          "value": "{\"pluginid\":\"com.stv.template.combine\"}"
+        }
+      }
+    },
+    {
+      "id": "open_desktop_mgtv",
+      "displayName": "芒果热播",
+      "keywords": [
+        "芒果热播",
+        "芒果热播桌面",
+        "打开芒果热播",
+        "切换芒果热播",
+        "打开芒果热播桌面",
+        "切换芒果热播桌面"
+      ],
+      "hotwords": [
+        "芒 果 热 播"
+      ],
+      "action": {
+        "type": "intent",
+        "intentAction": "com.stv.launcher.action.start",
+        "intentExtras": {
+          "type": "1",
+          "value": "{\"pluginid\":\"com.stv.template.mgtv\"}"
+        }
+      }
+    },
+    {
+      "id": "open_desktop_tencent",
+      "displayName": "云视听",
+      "keywords": [
+        "云视听",
+        "云视听桌面",
+        "打开云视听",
+        "切换云视听",
+        "打开云视听桌面",
+        "切换云视听桌面"
+      ],
+      "hotwords": [
+        "云 视 听"
+      ],
+      "action": {
+        "type": "intent",
+        "intentAction": "com.stv.launcher.action.start",
+        "intentExtras": {
+          "type": "1",
+          "value": "{\"pluginid\":\"com.stv.template.tencent\"}"
+        }
+      }
+    },
+    {
+      "id": "open_desktop_squaredance",
+      "displayName": "广场舞",
+      "keywords": [
+        "广场舞",
+        "广场舞桌面",
+        "打开广场舞",
+        "切换广场舞",
+        "打开广场舞桌面",
+        "切换广场舞桌面"
+      ],
+      "hotwords": [
+        "广 场 舞"
+      ],
+      "action": {
+        "type": "intent",
+        "intentAction": "com.stv.launcher.action.start",
+        "intentExtras": {
+          "type": "1",
+          "value": "{\"pluginid\":\"com.stv.template.squaredance\"}"
+        }
+      }
+    },
+    {
+      "id": "open_desktop_gitv",
+      "displayName": "宽带电视桌面",
+      "keywords": [
+        "宽带电视桌面",
+        "打开宽带电视桌面",
+        "切换宽带电视桌面"
+      ],
+      "hotwords": [
+        "宽 带 电 视 桌 面"
+      ],
+      "action": {
+        "type": "intent",
+        "intentAction": "com.stv.launcher.action.start",
+        "intentExtras": {
+          "type": "1",
+          "value": "{\"pluginid\":\"com.stv.template.gitv\"}"
+        }
+      }
+    },
+    {
       "id": "open_network_settings",
       "displayName": "打开网络设置",
-      "keywords": ["网络设置", "网路设置", "wifi设置", "无线设置", "打开网络", "打开网路", "打开wifi", "打开无线"],
-      "hotwords": ["打 开 网 络 设 置"],
+      "keywords": [
+        "网络设置",
+        "网路设置",
+        "wifi设置",
+        "无线设置",
+        "打开网络",
+        "打开网路",
+        "打开wifi",
+        "打开无线"
+      ],
+      "hotwords": [
+        "打 开 网 络 设 置"
+      ],
       "action": {
         "type": "intent",
         "intentAction": "android.settings.WIFI_SETTINGS"
@@ -15,8 +519,12 @@
     {
       "id": "open_bluetooth_settings",
       "displayName": "打开蓝牙设置",
-      "keywords": ["蓝牙"],
-      "hotwords": ["打 开 蓝 牙 设 置"],
+      "keywords": [
+        "蓝牙"
+      ],
+      "hotwords": [
+        "打 开 蓝 牙 设 置"
+      ],
       "action": {
         "type": "intent",
         "intentAction": "android.settings.BLUETOOTH_SETTINGS"
@@ -25,8 +533,15 @@
     {
       "id": "toggle_mute",
       "displayName": "切换静音",
-      "keywords": ["取消静音", "解除静音", "静音", "闭音"],
-      "hotwords": ["静 音"],
+      "keywords": [
+        "取消静音",
+        "解除静音",
+        "静音",
+        "闭音"
+      ],
+      "hotwords": [
+        "静 音"
+      ],
       "action": {
         "type": "builtin",
         "builtinAction": "toggle_mute"
@@ -35,8 +550,17 @@
     {
       "id": "volume_up",
       "displayName": "增大音量",
-      "keywords": ["增大音量", "调大音量", "音量调大", "音量大一点", "提高音量", "调大声音"],
-      "hotwords": ["增 大 音 量"],
+      "keywords": [
+        "增大音量",
+        "调大音量",
+        "音量调大",
+        "音量大一点",
+        "提高音量",
+        "调大声音"
+      ],
+      "hotwords": [
+        "增 大 音 量"
+      ],
       "action": {
         "type": "builtin",
         "builtinAction": "volume_up"
@@ -45,8 +569,17 @@
     {
       "id": "volume_down",
       "displayName": "减小音量",
-      "keywords": ["减小音量", "调小音量", "音量调小", "音量小一点", "降低音量", "调小声音"],
-      "hotwords": ["减 小 音 量"],
+      "keywords": [
+        "减小音量",
+        "调小音量",
+        "音量调小",
+        "音量小一点",
+        "降低音量",
+        "调小声音"
+      ],
+      "hotwords": [
+        "减 小 音 量"
+      ],
       "action": {
         "type": "builtin",
         "builtinAction": "volume_down"
@@ -55,8 +588,15 @@
     {
       "id": "open_sound_settings",
       "displayName": "打开声音设置",
-      "keywords": ["声音设置", "音频设置", "打开声音", "打开音频"],
-      "hotwords": ["打 开 声 音 设 置"],
+      "keywords": [
+        "声音设置",
+        "音频设置",
+        "打开声音",
+        "打开音频"
+      ],
+      "hotwords": [
+        "打 开 声 音 设 置"
+      ],
       "action": {
         "type": "intent",
         "intentAction": "android.settings.SOUND_SETTINGS"
@@ -65,8 +605,17 @@
     {
       "id": "open_display_settings",
       "displayName": "打开显示设置",
-      "keywords": ["显示设置", "屏幕设置", "画面设置", "打开显示", "打开屏幕", "打开画面"],
-      "hotwords": ["打 开 显 示 设 置"],
+      "keywords": [
+        "显示设置",
+        "屏幕设置",
+        "画面设置",
+        "打开显示",
+        "打开屏幕",
+        "打开画面"
+      ],
+      "hotwords": [
+        "打 开 显 示 设 置"
+      ],
       "action": {
         "type": "intent",
         "intentAction": "android.settings.DISPLAY_SETTINGS"
@@ -75,8 +624,14 @@
     {
       "id": "open_app_settings",
       "displayName": "打开应用管理",
-      "keywords": ["应用设置", "应用管理", "打开应用"],
-      "hotwords": ["应 用 管 理"],
+      "keywords": [
+        "应用设置",
+        "应用管理",
+        "打开应用"
+      ],
+      "hotwords": [
+        "应 用 管 理"
+      ],
       "action": {
         "type": "intent",
         "intentAction": "android.settings.APPLICATION_SETTINGS"
@@ -85,8 +640,15 @@
     {
       "id": "go_home",
       "displayName": "返回主页",
-      "keywords": ["返回主页", "回到主页", "返回桌面", "回到桌面"],
-      "hotwords": ["返 回 主 页"],
+      "keywords": [
+        "返回主页",
+        "回到主页",
+        "返回桌面",
+        "回到桌面"
+      ],
+      "hotwords": [
+        "返 回 主 页"
+      ],
       "action": {
         "type": "builtin",
         "builtinAction": "go_home"
@@ -95,9 +657,15 @@
     {
       "id": "open_settings",
       "displayName": "打开系统设置",
-      "keywords": ["打开设置", "系统设置", "进入设置"],
+      "keywords": [
+        "打开设置",
+        "系统设置",
+        "进入设置"
+      ],
       "endsWith": "设置",
-      "hotwords": ["打 开 设 置"],
+      "hotwords": [
+        "打 开 设 置"
+      ],
       "action": {
         "type": "intent",
         "intentAction": "android.settings.SETTINGS"

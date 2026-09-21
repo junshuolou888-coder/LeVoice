@@ -21,12 +21,16 @@ class CommandExecutor(private val context: Context) {
     fun execute(action: CommandAction) {
         when (action.type) {
             "intent" -> {
-                val intentAction = requireNotNull(action.intentAction) {
-                    "intent action requires 'intentAction' field"
+                val intent = Intent()
+                action.intentAction?.let { intent.action = it }
+                if (action.intentPackage != null && action.intentClass != null) {
+                    intent.setClassName(action.intentPackage, action.intentClass)
                 }
-                context.startActivity(
-                    Intent(intentAction).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-                )
+                action.intentExtras?.forEach { (key, value) ->
+                    intent.putExtra(key, value)
+                }
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                context.startActivity(intent)
             }
 
             "builtin" -> {

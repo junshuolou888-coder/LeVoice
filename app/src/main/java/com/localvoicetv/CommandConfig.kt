@@ -22,5 +22,8 @@ data class CommandEntry(
 data class CommandAction(
     val type: String,
     val intentAction: String? = null,
+    val intentPackage: String? = null,
+    val intentClass: String? = null,
+    val intentExtras: Map<String, String>? = null,
     val builtinAction: String? = null,
 )

@@ -85,9 +85,24 @@ object CommandConfigLoader {
             }
 
             val actionObj = obj.getJSONObject("action")
+            
+            val intentExtrasObj = actionObj.optJSONObject("intentExtras")
+            val intentExtras = if (intentExtrasObj != null) {
+                val map = mutableMapOf<String, String>()
+                val keys = intentExtrasObj.keys()
+                while (keys.hasNext()) {
+                    val key = keys.next()
+                    map[key] = intentExtrasObj.getString(key)
+                }
+                map
+            } else null
+
             val action = CommandAction(
                 type = actionObj.getString("type"),
                 intentAction = actionObj.optString("intentAction").ifEmpty { null },
+                intentPackage = actionObj.optString("intentPackage").ifEmpty { null },
+                intentClass = actionObj.optString("intentClass").ifEmpty { null },
+                intentExtras = intentExtras,
                 builtinAction = actionObj.optString("builtinAction").ifEmpty { null },
             )
 
