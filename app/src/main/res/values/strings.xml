@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">本地语音助手</string>
+    <string name="title">本地语音助手</string>
+    <string name="subtitle">语音只在电视上处理，不上传网络</string>
+    <string name="status_loading">正在加载本地中文模型…</string>
+    <string name="status_ready">准备就绪，请按确认键开始说话</string>
+    <string name="status_listening">正在聆听…说完后稍等片刻</string>
+    <string name="status_stopping">正在处理语音…</string>
+    <string name="status_permission">需要麦克风权限才能识别语音</string>
+    <string name="status_no_microphone">没有检测到可用麦克风，请连接带麦克风的遥控器</string>
+    <string name="status_model_error">模型加载失败：%1$s</string>
+    <string name="status_audio_error">录音失败：%1$s</string>
+    <string name="status_executed">已执行：%1$s</string>
+    <string name="recognized_placeholder">识别结果会显示在这里</string>
+    <string name="recognized_format">“%1$s”</string>
+    <string name="listen">开始说话</string>
+    <string name="stop">停止并执行</string>
+    <string name="open_settings">直接打开设置</string>
+    <string name="commands_title">你可以这样说</string>
+    <string name="commands">打开设置　·　打开网络设置　·　打开蓝牙设置\n打开声音设置　·　打开显示设置　·　返回主页\n增大音量　·　减小音量　·　静音</string>
+    <string name="command_not_understood">暂不支持“%1$s”</string>
+    <string name="command_failed">无法执行该指令：%1$s</string>
+    <string name="command_open_network">打开网络设置</string>
+    <string name="command_open_bluetooth">打开蓝牙设置</string>
+    <string name="command_open_sound">打开声音设置</string>
+    <string name="command_open_display">打开显示设置</string>
+    <string name="command_open_apps">打开应用管理</string>
+    <string name="command_open_settings">打开系统设置</string>
+    <string name="command_home">返回主页</string>
+    <string name="command_volume_up">增大音量</string>
+    <string name="command_volume_down">减小音量</string>
+    <string name="command_mute">切换静音</string>
+    <string name="permission_denied">麦克风权限被拒绝，请在系统设置中允许</string>
+    <string name="model_license">语音模型：sherpa-onnx streaming Zipformer zh 14M</string>
+</resources>

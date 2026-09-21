@@ -1,0 +1,17 @@
+*.iml
+.gradle/
+.gradle-local/
+.idea/
+.kotlin/
+.downloads/
+.inspect/
+.aar-patch/
+.m2-local/
+.tools/
+local.properties
+**/build/
+captures/
+.DS_Store
+*.apk
+*.ap_
+*.aab
