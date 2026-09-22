@@ -91,6 +91,13 @@ object CommandConfigLoader {
                 emptyList()
             }
 
+            val priority = obj.optInt("priority", 0)
+
+            val excludeArray = obj.optJSONArray("excludeKeywords")
+            val excludeKeywords = if (excludeArray != null) {
+                (0 until excludeArray.length()).map { j -> excludeArray.getString(j) }
+            } else null
+
             val actionObj = obj.getJSONObject("action")
 
             // intentExtras — preserve native types (Int, Boolean, String, …)
@@ -138,6 +145,8 @@ object CommandConfigLoader {
                 endsWith = endsWith,
                 regex = regex,
                 hotwords = hotwords,
+                priority = priority,
+                excludeKeywords = excludeKeywords,
                 action = action,
             )
         }

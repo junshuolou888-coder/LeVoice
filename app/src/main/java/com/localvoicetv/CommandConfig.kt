@@ -17,6 +17,8 @@ data class CommandEntry(
     val endsWith: String? = null,
     val regex: String? = null,
     val hotwords: List<String> = emptyList(),
+    val priority: Int = 0,
+    val excludeKeywords: List<String>? = null,
     val action: CommandAction,
 )
 
