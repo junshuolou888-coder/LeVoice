@@ -7,6 +7,10 @@ android {
     namespace = "com.localvoicetv"
     compileSdk = 36
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     defaultConfig {
         applicationId = "com.localvoicetv"
         minSdk = 23
@@ -14,7 +18,7 @@ android {
         versionCode = 1
         versionName = "0.1.0"
 
-        testInstrumentationRunner = "android.test.InstrumentationTestRunner"
+        testInstrumentationRunner = "com.localvoicetv.CommandEngineDeviceChecks"
     }
 
     buildTypes {

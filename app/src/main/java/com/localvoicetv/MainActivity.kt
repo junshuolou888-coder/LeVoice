@@ -134,12 +134,14 @@ class MainActivity : Activity(), SherpaSpeechRecognizer.Listener {
     }
 
     override fun onPartialResult(text: String) {
+        if (BuildConfig.DEBUG) android.util.Log.d("VoiceRecognition", "partial=$text")
         runOnUiThread {
             transcriptText.text = getString(R.string.recognized_format, text)
         }
     }
 
     override fun onFinalResult(text: String) {
+        if (BuildConfig.DEBUG) android.util.Log.d("VoiceRecognition", "final=$text")
         runOnUiThread {
             if (!screenActive || isDestroyed || isFinishing) return@runOnUiThread
             weather.cancel()

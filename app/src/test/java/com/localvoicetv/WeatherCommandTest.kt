@@ -16,6 +16,11 @@ class WeatherCommandTest {
             Triple("本地天气", "本地", ""), Triple("搜索深圳天气", "深圳", ""),
             Triple("当前北京天气", "北京", "当前"), Triple("北京天气预报", "北京", "today"),
             Triple("查询天气预报", "", "today"), Triple("后天北京天气预报", "北京", "后天"),
+            Triple("看一下 今天的天气", "", "今天"), Triple("看一下今天的天气。", "", "今天"),
+            Triple("看下天气", "", ""), Triple("请帮我看一下明天的天气", "", "明天"),
+            Triple("查看一下后天天气", "", "后天"), Triple("查一查今天天气", "", "今天"),
+            Triple("看一下上海今天的天气", "上海", "今天"), Triple("看一下今天北京的天气", "北京", "今天"),
+            Triple("看一下今天的天气预报", "", "今天"), Triple("看下北京天气预报", "北京", "today"),
         )
         for (entries in listOf(config.commands, config.commands.reversed())) {
             val registry = CommandRegistry(config.copy(commands = entries))
@@ -36,7 +41,7 @@ class WeatherCommandTest {
             "我想看刘德华的电影电影" to "search_actor_movies", "打开网络设置" to "open_network_settings")) {
             assertEquals(text, id, registry.match(text)!!.entry.id)
         }
-        for (text in listOf("不要查北京天气", "打开天气", "关闭天气", "播放天气")) {
+        for (text in listOf("不要查北京天气", "打开天气", "关闭天气", "播放天气", "看一下天气之子", "查看一下天气之子")) {
             assertNotEquals(text, "check_weather", registry.match(text)?.entry?.action?.builtinAction)
         }
     }

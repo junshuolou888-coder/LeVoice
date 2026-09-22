@@ -8,7 +8,8 @@ import org.json.JSONObject
 /** Resolves variables before dispatch, preserving JSON structure and extra value types. */
 internal class CommandParameters(private val variables: Map<String, String>) {
     companion object {
-        private val PLACEHOLDER = Regex("\\$\\{([A-Za-z_][A-Za-z0-9_]*)(?::([A-Za-z]+))?}|\\$(param[1-9][0-9]*)(?![A-Za-z0-9_])")
+        // Escape both braces: Android's regex engine rejects a bare closing brace.
+        private val PLACEHOLDER = Regex("\\$\\{([A-Za-z_][A-Za-z0-9_]*)(?::([A-Za-z]+))?\\}|\\$(param[1-9][0-9]*)(?![A-Za-z0-9_])")
     }
 
     // One pass: replacement text is never interpreted as another template.

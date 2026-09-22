@@ -5,13 +5,12 @@ import android.app.AlertDialog
 import android.os.Handler
 import android.os.Looper
 import android.text.InputType
-import android.text.SpannableString
-import android.text.Spanned
-import android.text.method.LinkMovementMethod
-import android.text.style.URLSpan
-import android.text.util.Linkify
+import android.view.Gravity
+import android.view.ViewGroup
+import android.view.WindowManager
 import android.widget.EditText
 import android.widget.LinearLayout
+import android.widget.PopupWindow
 import android.widget.ScrollView
 import android.widget.TextView
 
@@ -22,6 +21,8 @@ class WeatherController(private val activity: Activity, private val status: (Str
     private val requests = LatestRequestRunner(deliver = { callback -> main.post { callback() } })
     private var client: QWeatherClient? = null
     private var dialog: AlertDialog? = null
+    private var popup: PopupWindow? = null
+    private val hidePopup = Runnable { dismissPopup() }
     private var pending = false
 
     fun query(params: Map<String, String>): CommandExecution {
@@ -30,6 +31,7 @@ class WeatherController(private val activity: Activity, private val status: (Str
         val period = WeatherPeriod.parse(params["period"].orEmpty().ifEmpty { params["defaultPeriod"].orEmpty() })
         val service = client ?: QWeatherClient(store.load().also { it.validate() }).also { client = it }
         dialog?.dismiss()
+        dismissPopup()
         status(if (city.isBlank() || city in setOf("本地", "当地", "这里")) "正在定位并查询${period.label}天气…" else "正在查询${city}${period.label}天气…")
         pending = true
         requests.submit({ cancellation -> service.query(city, period, cancellation) }) { result ->
@@ -39,13 +41,17 @@ class WeatherController(private val activity: Activity, private val status: (Str
                 showReport(report)
             }, onFailure = { error ->
                 if (error is AmbiguousCityException) {
-                    status("找到多个城市，请选择具体地区")
-                    dialog = AlertDialog.Builder(activity).setTitle("选择城市")
-                        .setItems(error.cities.map { it.label }.toTypedArray()) { _, index ->
-                            query(mapOf("city" to error.cities[index].id, "period" to period.name.lowercase()))
-                        }.setNegativeButton("取消", null).show()
+                    val examples = error.cities.map { city ->
+                        listOf(city.adm1, city.adm2, city.name).filter { it.isNotBlank() }.distinct().joinToString("")
+                    }.distinct().take(2).joinToString("、")
+                    val message = "地区名称不明确，请补充省市" +
+                        if (examples.isEmpty()) "后再查询" else "，例如：$examples"
+                    status(message)
+                    showPopup(message)
                 } else {
-                    status(error.message ?: "天气查询失败，请稍后重试")
+                    val message = error.message ?: "天气查询失败，请稍后重试"
+                    status(message)
+                    showPopup(message, 8_000L)
                 }
             })
         }
@@ -101,39 +107,53 @@ class WeatherController(private val activity: Activity, private val status: (Str
     }
 
     private fun showReport(report: WeatherReport) {
-        val content = LinearLayout(activity).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(dp(24), dp(12), dp(24), dp(12))
-            addView(TextView(activity).apply {
-                text = report.displayText()
-                textSize = 22f
-                setLineSpacing(dp(4).toFloat(), 1f)
-            })
-            addView(TextView(activity).apply {
-                val label = "天气服务由和风天气驱动"
-                text = SpannableString(label).apply {
-                    setSpan(URLSpan("https://www.qweather.com"), 5, 9, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-                }
-                textSize = 16f
-                setPadding(0, dp(16), 0, dp(8))
-                movementMethod = LinkMovementMethod.getInstance()
-            })
-            if (report.attributions.isNotEmpty()) addView(TextView(activity).apply {
-                text = report.attributions.joinToString("\n")
-                textSize = 14f
-                Linkify.addLinks(this, Linkify.WEB_URLS)
-                movementMethod = LinkMovementMethod.getInstance()
-            })
+        showPopup(report.displayText())
+    }
+
+    private fun showPopup(message: String, durationMillis: Long = 12_000L) {
+        dismissPopup()
+        val anchor = activity.window.decorView
+        if (activity.isFinishing || activity.isDestroyed || !anchor.isAttachedToWindow) return
+        val content = TextView(activity).apply {
+            text = message
+            textSize = 22f
+            setTextColor(activity.getColor(R.color.text_primary))
+            setPadding(dp(24), dp(20), dp(24), dp(20))
+            setLineSpacing(dp(4).toFloat(), 1f)
         }
-        dialog = AlertDialog.Builder(activity).setTitle("天气查询")
-            .setView(ScrollView(activity).apply { addView(content) })
-            .setPositiveButton("关闭", null).show()
+        val width = minOf(dp(520), activity.resources.displayMetrics.widthPixels - dp(48))
+        val window = PopupWindow(content, width, ViewGroup.LayoutParams.WRAP_CONTENT, false).apply {
+            isTouchable = false
+            isOutsideTouchable = false
+            elevation = dp(12).toFloat()
+            setBackgroundDrawable(activity.getDrawable(R.drawable.panel_background))
+            setOnDismissListener {
+                if (popup === this) {
+                    popup = null
+                    main.removeCallbacks(hidePopup)
+                }
+            }
+        }
+        popup = window
+        try {
+            window.showAtLocation(anchor, Gravity.TOP or Gravity.CENTER_HORIZONTAL, 0, dp(32))
+            main.postDelayed(hidePopup, durationMillis)
+        } catch (_: WindowManager.BadTokenException) {
+            dismissPopup() // The activity's window may disappear while a request finishes.
+        }
+    }
+
+    private fun dismissPopup() {
+        main.removeCallbacks(hidePopup)
+        popup?.dismiss()
+        popup = null
     }
 
     fun cancel() {
         requests.cancel()
         if (pending) status("天气查询已取消")
         pending = false
+        dismissPopup()
         dialog?.dismiss()
         dialog = null
     }

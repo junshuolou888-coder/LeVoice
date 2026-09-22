@@ -55,6 +55,7 @@ class CommandRegistry(config: CommandConfig) {
             Log.i(TAG, "Best match: [${best.entry.id}] score=${best.score} " +
                 "type=${best.matchType} vars=${best.variables}; candidates=" +
                 candidates.take(3).joinToString { "${it.entry.id}:${it.score}/${it.matchType}" })
+            if (BuildConfig.DEBUG) Log.d(TAG, "Match evidence: text=$recognizedText; matched=${best.matchedText}")
             val tied = candidates.takeWhile {
                 it.score == best.score && it.matchedText.length == best.matchedText.length &&
                     it.matchType == best.matchType

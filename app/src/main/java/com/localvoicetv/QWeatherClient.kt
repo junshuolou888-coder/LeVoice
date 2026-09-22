@@ -15,7 +15,7 @@ import java.util.concurrent.CancellationException
 import kotlin.math.roundToInt
 
 class WeatherException(message: String) : Exception(message)
-class AmbiguousCityException(val cities: List<WeatherCity>) : Exception("找到多个城市，请选择具体地区")
+class AmbiguousCityException(val cities: List<WeatherCity>) : Exception("地区名称不明确，请补充省市后再查询")
 
 data class WeatherCity(
     val id: String, val name: String, val adm1: String, val adm2: String,
