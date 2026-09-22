@@ -15,3 +15,6 @@ captures/
 *.apk
 *.ap_
 *.aab
+
+# Local weather credential; never commit or package it.
+weather.local.json

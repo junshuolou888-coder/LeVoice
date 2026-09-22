@@ -1,155 +1,145 @@
 package com.localvoicetv
 
 import android.util.Log
+import java.util.Locale
 
 /**
- * Holds the active command configuration and provides:
- * - Hotwords string generation for sherpa-onnx
- * - Score-based text-to-command matching
- * - Display name list for the UI
- *
- * ## Matching Algorithm (Scored Best-Match)
- *
- * Instead of a simple first-match waterfall, every command is scored
- * and the **highest scoring** candidate wins.
- *
- * Score = matchTypeBase + coverageBonus + priorityBonus
- *
- *   matchTypeBase:
- *     exact   = 1000
- *     regex   =  800
- *     endsWith=  600
- *     contains=  400
- *
- *   coverageBonus (contains only):
- *     keyword.length / text.length * 100
- *     → longer keyword relative to input = higher score
- *
- *   priorityBonus:
- *     entry.priority * 10
- *     → JSON-declared explicit priority adjustment
+ * Compiles JSON rules once per configuration, then ranks all matching commands.
+ * Repetition tolerance belongs in each command's grammar, never in normalization.
  */
-class CommandRegistry(private var config: CommandConfig) {
-
+class CommandRegistry(config: CommandConfig) {
     companion object {
         private const val TAG = "CommandRegistry"
+        private val PUNCTUATION = Regex("[\\s，。！？、,.!?]")
+        private val CANDIDATE_ORDER = compareByDescending<CommandMatchResult> { it.score }
+            .thenByDescending { it.matchedText.length }
+            .thenBy { it.matchType.ordinal }
+            .thenBy { it.entry.id }
 
-        // Match type base scores
-        private const val SCORE_EXACT    = 1000
-        private const val SCORE_REGEX    =  800
-        private const val SCORE_ENDSWITH =  600
-        private const val SCORE_CONTAINS =  400
-
-        /**
-         * Normalize raw recognized text:
-         * lowercase, strip whitespace and Chinese/English punctuation.
-         */
+        /** Keep repetition intact: names and titles can legitimately contain it. */
         fun normalize(rawText: String): String =
-            rawText
-                .lowercase()
-                .replace(Regex("[\\s，。！？、,.!?]"), "")
+            rawText.lowercase(Locale.ROOT).replace(PUNCTUATION, "")
     }
 
-    /** Generate the hotwords string to pass to sherpa-onnx createStream(). */
+    private data class CompiledEntry(
+        val entry: CommandEntry,
+        val keywords: List<String>,
+        val suffix: String?,
+        val regex: Regex?,
+        val exclusions: List<String>,
+    )
+
+    private data class State(val config: CommandConfig, val entries: List<CompiledEntry>)
+
+    @Volatile
+    private var state = compile(config)
+
     fun buildHotwords(): String =
-        config.commands
-            .flatMap { it.hotwords }
-            .joinToString("\n")
+        state.config.commands.flatMap { it.hotwords }.joinToString("\n")
 
-    /** Get the configured hotwords score. */
-    fun hotwordsScore(): Float = config.hotwordsScore
+    fun hotwordsScore(): Float = state.config.hotwordsScore
 
-    /**
-     * Score-based matching: evaluate ALL commands, pick the highest scorer.
-     */
-    fun match(recognizedText: String): CommandMatchResult? {
-        val text = normalize(recognizedText)
-        if (text.isBlank()) return null
+    fun allDisplayNames(): List<String> = state.config.commands.map { it.displayName }
 
-        var bestResult: CommandMatchResult? = null
-        var bestScore = -1
-
-        for (entry in config.commands) {
-            // Exclusion check: skip if text contains any exclude keyword
-            if (entry.excludeKeywords?.any { text.contains(it) } == true) {
-                continue
-            }
-
-            val (score, vars) = scoreEntry(text, entry)
-            if (score > bestScore) {
-                bestScore = score
-                bestResult = CommandMatchResult(entry, vars)
-            }
-        }
-
-        if (bestResult != null) {
-            Log.i(TAG, "Best match: [${bestResult.entry.id}] score=$bestScore vars=${bestResult.variables} for text=\"$text\"")
-        } else {
-            Log.i(TAG, "No match for text=\"$text\"")
-        }
-
-        return bestResult
-    }
-
-    /** Return display names of all commands, for the "你可以这样说" panel. */
-    fun allDisplayNames(): List<String> =
-        config.commands.map { it.displayName }
-
-    /** Replace the current config (for future hot-reload). */
+    /** Compile first, so a failed reload leaves the active snapshot intact. */
     fun reload(newConfig: CommandConfig) {
-        config = newConfig
+        state = compile(newConfig)
     }
 
-    // ────────────────── Scoring Engine ──────────────────
-
-    /**
-     * Compute the match score for [entry] against [text].
-     * Returns (score, variables).  score = -1 means no match.
-     */
-    private fun scoreEntry(text: String, entry: CommandEntry): Pair<Int, Map<String, String>> {
-        val priorityBonus = entry.priority * 10
-
-        // 1. Exact match
-        for (kw in entry.keywords) {
-            if (kw == text) {
-                return (SCORE_EXACT + priorityBonus) to emptyMap()
+    fun match(recognizedText: String): CommandMatchResult? {
+        val candidates = rankCandidates(recognizedText)
+        val best = candidates.firstOrNull()
+        if (best == null) {
+            Log.i(TAG, "No match for text=\"${normalize(recognizedText)}\"")
+        } else {
+            Log.i(TAG, "Best match: [${best.entry.id}] score=${best.score} " +
+                "type=${best.matchType} vars=${best.variables}; candidates=" +
+                candidates.take(3).joinToString { "${it.entry.id}:${it.score}/${it.matchType}" })
+            val tied = candidates.takeWhile {
+                it.score == best.score && it.matchedText.length == best.matchedText.length &&
+                    it.matchType == best.matchType
+            }
+            if (tied.size > 1) {
+                Log.w(TAG, "Ambiguous rules: ${tied.map { it.entry.id }}; " +
+                    "selected by id. Set JSON priority or narrow the rules.")
             }
         }
+        return best
+    }
 
-        // 2. Regex match
-        if (entry.regex != null) {
-            val regex = Regex(entry.regex)
-            val match = regex.find(text)
-            if (match != null) {
-                val vars = mutableMapOf<String, String>()
-                for (i in 1 until match.groupValues.size) {
-                    vars["param$i"] = match.groupValues[i]
-                }
-                return (SCORE_REGEX + priorityBonus) to vars
-            }
-        }
+    /** Best candidate per command, with evidence for debugging overlapping JSON rules. */
+    fun rankCandidates(recognizedText: String): List<CommandMatchResult> {
+        val text = normalize(recognizedText)
+        if (text.isBlank()) return emptyList()
+        return state.entries.mapNotNull { scoreEntry(text, it) }.sortedWith(CANDIDATE_ORDER)
+    }
 
-        // 3. EndsWith match
-        if (entry.endsWith != null && text.endsWith(entry.endsWith)) {
-            val coverage = (entry.endsWith.length.toFloat() / text.length * 100).toInt()
-            return (SCORE_ENDSWITH + coverage + priorityBonus) to emptyMap()
-        }
-
-        // 4. Contains match — pick the longest matching keyword for coverage bonus
-        var bestContainsScore = -1
-        for (kw in entry.keywords) {
-            if (text.contains(kw)) {
-                val coverage = (kw.length.toFloat() / text.length * 100).toInt()
-                val score = SCORE_CONTAINS + coverage + priorityBonus
-                if (score > bestContainsScore) {
-                    bestContainsScore = score
+    private fun compile(config: CommandConfig): State {
+        config.validate()
+        return State(config, config.commands.map { entry ->
+            val regex = entry.regex?.takeIf { it.isNotBlank() }?.let { pattern ->
+                try {
+                    Regex(pattern)
+                } catch (e: IllegalArgumentException) {
+                    Log.w(TAG, "Invalid regex in [${entry.id}], regex rule disabled", e)
+                    null
                 }
             }
-        }
-        if (bestContainsScore > 0) {
-            return bestContainsScore to emptyMap()
+            CompiledEntry(
+                entry = entry,
+                keywords = entry.keywords.map(::normalize).filter { it.isNotEmpty() }.distinct(),
+                suffix = entry.endsWith?.let(::normalize)?.takeIf { it.isNotEmpty() },
+                regex = regex,
+                exclusions = entry.excludeKeywords.orEmpty().map(::normalize)
+                    .filter { it.isNotEmpty() }.distinct(),
+            )
+        })
+    }
+
+    private fun scoreEntry(text: String, rule: CompiledEntry): CommandMatchResult? {
+        if (rule.exclusions.any { text.contains(it) }) return null
+        var best: CommandMatchResult? = null
+
+        fun consider(type: CommandMatchType, matchedText: String, variables: Map<String, String> = emptyMap()) {
+            val coverage = when (type) {
+                CommandMatchType.EXACT, CommandMatchType.REGEX_FULL -> 0L
+                else -> matchedText.length.toLong() * 100 / text.length
+            }
+            val candidate = CommandMatchResult(
+                entry = rule.entry,
+                variables = variables,
+                score = type.baseScore + coverage + rule.entry.priority.toLong() * 10,
+                matchType = type,
+                matchedText = matchedText,
+            )
+            val previous = best
+            if (previous == null || CANDIDATE_ORDER.compare(candidate, previous) < 0) best = candidate
         }
 
-        return -1 to emptyMap()
+        rule.keywords.forEach { keyword ->
+            when {
+                text == keyword -> consider(CommandMatchType.EXACT, keyword)
+                text.contains(keyword) -> consider(CommandMatchType.CONTAINS, keyword)
+            }
+        }
+        rule.suffix?.let { suffix ->
+            if (text.endsWith(suffix)) consider(CommandMatchType.SUFFIX, suffix)
+        }
+        rule.regex?.let { regex ->
+            val fullMatch = regex.matchEntire(text)
+            val match = fullMatch ?: regex.find(text)
+            // Empty matches carry no evidence and must not trigger an action.
+            if (match != null && match.value.isNotEmpty()) {
+                val variables = (1 until match.groupValues.size).associate { i ->
+                    "param$i" to match.groupValues[i]
+                }
+                consider(
+                    if (fullMatch != null) CommandMatchType.REGEX_FULL else CommandMatchType.REGEX_PARTIAL,
+                    match.value,
+                    variables,
+                )
+            }
+        }
+        return best
     }
 }

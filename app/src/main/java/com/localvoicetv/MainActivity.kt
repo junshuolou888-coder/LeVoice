@@ -18,9 +18,11 @@ class MainActivity : Activity(), SherpaSpeechRecognizer.Listener {
 
     private lateinit var registry: CommandRegistry
     private lateinit var executor: CommandExecutor
+    private lateinit var weather: WeatherController
 
     @Volatile
     private var modelReady = false
+    private var screenActive = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,7 +37,9 @@ class MainActivity : Activity(), SherpaSpeechRecognizer.Listener {
         // Load command config and create registry + executor
         val config = CommandConfigLoader.load(applicationContext)
         registry = CommandRegistry(config)
-        executor = CommandExecutor(this)
+        weather = WeatherController(this) { statusText.text = it }
+        executor = CommandExecutor(this, mapOf("check_weather" to weather::query))
+        findViewById<Button>(R.id.weatherSettingsButton).setOnClickListener { weather.showSettings() }
 
         // Update the "你可以这样说" panel from config
         commandsText.text = registry.allDisplayNames().joinToString("　·　")
@@ -50,6 +54,7 @@ class MainActivity : Activity(), SherpaSpeechRecognizer.Listener {
             }
         }
         settingsButton.setOnClickListener {
+            weather.cancel()
             val settingsAction = CommandAction(
                 type = "intent",
                 intentAction = "android.settings.SETTINGS",
@@ -68,7 +73,19 @@ class MainActivity : Activity(), SherpaSpeechRecognizer.Listener {
         )
     }
 
+    override fun onStart() {
+        super.onStart()
+        screenActive = true
+    }
+
+    override fun onStop() {
+        screenActive = false
+        weather.cancel()
+        super.onStop()
+    }
+
     override fun onDestroy() {
+        weather.close()
         speechRecognizer.release()
         super.onDestroy()
     }
@@ -90,9 +107,10 @@ class MainActivity : Activity(), SherpaSpeechRecognizer.Listener {
 
     override fun onModelReady() {
         runOnUiThread {
+            if (isDestroyed || isFinishing) return@runOnUiThread
             modelReady = true
             listenButton.isEnabled = true
-            statusText.setText(R.string.status_ready)
+            if (statusText.text == getString(R.string.status_loading)) statusText.setText(R.string.status_ready)
             listenButton.requestFocus()
         }
     }
@@ -123,6 +141,8 @@ class MainActivity : Activity(), SherpaSpeechRecognizer.Listener {
 
     override fun onFinalResult(text: String) {
         runOnUiThread {
+            if (!screenActive || isDestroyed || isFinishing) return@runOnUiThread
+            weather.cancel()
             transcriptText.text = getString(R.string.recognized_format, text)
             val matchResult = registry.match(text)
             if (matchResult == null) {
@@ -131,8 +151,10 @@ class MainActivity : Activity(), SherpaSpeechRecognizer.Listener {
             } else {
                 try {
                     android.util.Log.i("MainActivity", "Matched [${matchResult.entry.id}] with vars: ${matchResult.variables}")
-                    executor.execute(matchResult.entry.action, matchResult.variables)
-                    statusText.text = getString(R.string.status_executed, matchResult.entry.displayName)
+                    val execution = executor.execute(matchResult.entry.action, matchResult.variables)
+                    if (execution == CommandExecution.COMPLETED) {
+                        statusText.text = getString(R.string.status_executed, matchResult.entry.displayName)
+                    }
                 } catch (e: Exception) {
                     statusText.text = getString(
                         R.string.command_failed,
@@ -176,6 +198,7 @@ class MainActivity : Activity(), SherpaSpeechRecognizer.Listener {
 
     private fun startListening() {
         if (!modelReady) return
+        weather.cancel()
         transcriptText.setText(R.string.recognized_placeholder)
         speechRecognizer.startListening()
     }

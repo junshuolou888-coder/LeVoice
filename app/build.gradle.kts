@@ -48,9 +48,18 @@ android {
     androidResources {
         noCompress += listOf("onnx", "txt")
     }
+
+    // Plain JVM matching tests stub Log; executor tests use Android classes via Robolectric.
+    testOptions.unitTests.isReturnDefaultValues = true
+    sourceSets.getByName("test").resources.apply {
+        srcDir("src/main/assets")
+        include("default_commands.json")
+    }
 }
 
 dependencies {
     implementation(files("libs/sherpa-onnx-1.12.39-android6.aar"))
     testImplementation("junit:junit:4.13.2")
+    testImplementation("org.json:json:20240303")
+    testImplementation("org.robolectric:robolectric:4.14.1")
 }

@@ -166,9 +166,9 @@ class CommandRegistryTest {
         val entry = registry.match(input)
         assertNotNull("Expected match for '$input' but got null", entry)
         assertEquals(
-            "Input '$input' should match '$expectedId' but matched '${entry!!.id}'",
+            "Input '$input' should match '$expectedId' but matched '${entry!!.entry.id}'",
             expectedId,
-            entry.id,
+            entry.entry.id,
         )
     }
 }

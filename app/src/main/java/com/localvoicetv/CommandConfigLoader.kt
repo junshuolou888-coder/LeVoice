@@ -101,7 +101,7 @@ object CommandConfigLoader {
             val actionObj = obj.getJSONObject("action")
 
             // intentExtras — preserve native types (Int, Boolean, String, …)
-            val intentExtrasObj = actionObj.optJSONObject("intentExtras")
+            val intentExtrasObj = if (actionObj.isNull("intentExtras")) null else actionObj.getJSONObject("intentExtras")
             val intentExtras = if (intentExtrasObj != null) {
                 val map = mutableMapOf<String, Any>()
                 val keys = intentExtrasObj.keys()
@@ -113,29 +113,38 @@ object CommandConfigLoader {
             } else null
 
             // intentCategories (optional string array)
-            val categoriesArray = actionObj.optJSONArray("intentCategories")
+            val categoriesArray = if (actionObj.isNull("intentCategories")) null else actionObj.getJSONArray("intentCategories")
             val intentCategories = if (categoriesArray != null) {
                 (0 until categoriesArray.length()).map { j -> categoriesArray.getString(j) }
             } else null
 
             // intentFlags (optional string array)
-            val flagsArray = actionObj.optJSONArray("intentFlags")
+            val flagsArray = if (actionObj.isNull("intentFlags")) null else actionObj.getJSONArray("intentFlags")
             val intentFlags = if (flagsArray != null) {
                 (0 until flagsArray.length()).map { j -> flagsArray.getString(j) }
             } else null
 
             val action = CommandAction(
-                type = actionObj.getString("type"),
-                intentAction = actionObj.optString("intentAction").ifEmpty { null },
-                intentData = actionObj.optString("intentData").ifEmpty { null },
-                intentType = actionObj.optString("intentType").ifEmpty { null },
-                intentPackage = actionObj.optString("intentPackage").ifEmpty { null },
-                intentClass = actionObj.optString("intentClass").ifEmpty { null },
+                type = requireNotNull(actionObj.optionalString("type")) { "action 必须提供 type" },
+                intentAction = actionObj.optionalString("intentAction"),
+                intentData = actionObj.optionalString("intentData"),
+                intentType = actionObj.optionalString("intentType"),
+                intentPackage = actionObj.optionalString("intentPackage"),
+                intentClass = actionObj.optionalString("intentClass"),
                 intentCategories = intentCategories,
                 intentFlags = intentFlags,
                 intentExtras = intentExtras,
-                uri = actionObj.optString("uri").ifEmpty { null },
-                builtinAction = actionObj.optString("builtinAction").ifEmpty { null },
+                uri = actionObj.optionalString("uri"),
+                builtinAction = actionObj.optionalString("builtinAction"),
+                serviceMode = actionObj.optionalString("serviceMode") ?: "normal",
+                builtinParams = if (actionObj.isNull("builtinParams")) emptyMap() else {
+                    val params = actionObj.getJSONObject("builtinParams")
+                    params.keys().asSequence().associateWith { key ->
+                        val value = params.get(key)
+                        require(value is String) { "builtinParams[$key] 必须是字符串" }
+                        value
+                    }
+                },
             )
 
             CommandEntry(
@@ -155,7 +164,14 @@ object CommandConfigLoader {
             version = version,
             hotwordsScore = hotwordsScore,
             commands = commands,
-        )
+        ).also { it.validate() }
+    }
+
+    private fun JSONObject.optionalString(key: String): String? {
+        if (isNull(key)) return null
+        val value = get(key)
+        require(value is String) { "action.$key 必须是字符串" }
+        return value.takeIf { it.isNotBlank() }
     }
 
     /** Hardcoded fallback in case all file sources fail. */

@@ -2,7 +2,8 @@
 <resources>
     <string name="app_name">本地语音助手</string>
     <string name="title">本地语音助手</string>
-    <string name="subtitle">语音只在电视上处理，不上传网络</string>
+    <string name="subtitle">语音识别在本地完成，天气查询需要联网</string>
+    <string name="weather_settings">天气设置</string>
     <string name="status_loading">正在加载本地中文模型…</string>
     <string name="status_ready">准备就绪，请按确认键开始说话</string>
     <string name="status_listening">正在聆听…说完后稍等片刻</string>

@@ -1,11 +1,11 @@
 {
-  "version": 2,
+  "version": 4,
   "hotwordsScore": 8.0,
   "commands": [
     {
       "id": "search_actor_movies",
       "displayName": "搜索演员影片",
-      "regex": "^(?:我想看|我想搜|我想找|搜索|搜一下|找一下)(.+?)的(?:电影|影片|电视剧|综艺|视频|戏|剧)$",
+      "regex": "^(?:我想看|我想搜|我想找|搜索|搜一下|找一下)(.+?)的(电影|影片|电视剧|综艺|视频|戏|剧)(?:\\2)*$",
       "action": {
         "type": "activity",
         "intentAction": "com.letv.leso.desktop.receiver",
@@ -14,16 +14,13 @@
           "resource": 1,
           "value": "{\"keyword\":\"$param1\",\"fulltext\":\"$param1\",\"isActorSearch\":true}"
         }
-      },
-      "keywords": [
-        "__p1",
-        "__p2"
-      ]
+      }
     },
     {
       "id": "search_general",
       "displayName": "搜索",
-      "regex": "^(?:我想看|我想搜|我想找|搜索|搜一下|找一下)(?:电影|电视剧|综艺|动漫|纪录片)?(?!.*的(?:电影|影片|电视剧|综艺|视频|戏|剧)$)(.+)$",
+      "regex": "^(?:我想看|我想搜|我想找|搜索|搜一下|找一下)(.+)$",
+      "priority": -1,
       "action": {
         "type": "activity",
         "intentAction": "com.letv.leso.desktop.receiver",
@@ -32,10 +29,7 @@
           "resource": 1,
           "value": "{\"keyword\":\"$param1\",\"fulltext\":\"$param1\",\"isActorSearch\":false}"
         }
-      },
-      "keywords": [
-        "__p1"
-      ]
+      }
     },
     {
       "id": "pano_detail",
@@ -54,6 +48,7 @@
     {
       "id": "pano_star_detail",
       "displayName": "明星详情页",
+      "priority": 1,
       "regex": "^打开(.+)的?明星详情$",
       "action": {
         "type": "activity",
@@ -689,8 +684,7 @@
       "displayName": "打开应用管理",
       "keywords": [
         "应用设置",
-        "应用管理",
-        "打开应用"
+        "应用管理"
       ],
       "hotwords": [
         "应 用 管 理"
@@ -732,6 +726,72 @@
       "action": {
         "type": "activity",
         "intentAction": "android.settings.SETTINGS"
+      }
+    },
+    {
+      "id": "check_weather_city",
+      "displayName": "北京天气怎么样",
+      "regex": "^(?!我想看|打开|播放|不要|别|关闭)(?:请)?(?:帮我)?(?:查询一下|查询|查一下|查查|查看|查|看看|搜索|搜一下)?((?:(?!今天|明天|后天|现在|当前).)*?)的?(今天|明天|后天|现在|当前)?的?天气(?:天气)*(?:怎么样|如何|情况)?$",
+      "priority": 2,
+      "hotwords": [
+        "天 气",
+        "天 气 预 报"
+      ],
+      "action": {
+        "type": "builtin",
+        "builtinAction": "check_weather",
+        "builtinParams": {
+          "city": "$param1",
+          "period": "$param2"
+        }
+      }
+    },
+    {
+      "id": "check_weather_date_first",
+      "displayName": "明天上海天气",
+      "regex": "^(?!我想看|打开|播放|不要|别|关闭)(?:请)?(?:帮我)?(?:查询一下|查询|查一下|查查|查看|查|看看|搜索|搜一下)?(今天|明天|后天|现在|当前)的?((?:(?!今天|明天|后天|现在|当前).)*?)的?天气(?:天气)*(?:怎么样|如何|情况)?$",
+      "priority": 3,
+      "action": {
+        "type": "builtin",
+        "builtinAction": "check_weather",
+        "builtinParams": {
+          "city": "$param2",
+          "period": "$param1"
+        }
+      }
+    },
+    {
+      "id": "check_weather_city_forecast",
+      "displayName": "查询天气预报",
+      "regex": "^(?!我想看|打开|播放|不要|别|关闭)(?:请)?(?:帮我)?(?:查询一下|查询|查一下|查查|查看|查|看看|搜索|搜一下)?((?:(?!今天|明天|后天|现在|当前).)*?)的?(今天|明天|后天|现在|当前)?的?天气(?:天气)*预报(?:怎么样|如何|情况)?$",
+      "priority": 2,
+      "hotwords": [
+        "天 气",
+        "天 气 预 报"
+      ],
+      "action": {
+        "type": "builtin",
+        "builtinAction": "check_weather",
+        "builtinParams": {
+          "city": "$param1",
+          "period": "$param2",
+          "defaultPeriod": "today"
+        }
+      }
+    },
+    {
+      "id": "check_weather_date_first_forecast",
+      "displayName": "后天天气预报",
+      "regex": "^(?!我想看|打开|播放|不要|别|关闭)(?:请)?(?:帮我)?(?:查询一下|查询|查一下|查查|查看|查|看看|搜索|搜一下)?(今天|明天|后天|现在|当前)的?((?:(?!今天|明天|后天|现在|当前).)*?)的?天气(?:天气)*预报(?:怎么样|如何|情况)?$",
+      "priority": 3,
+      "action": {
+        "type": "builtin",
+        "builtinAction": "check_weather",
+        "builtinParams": {
+          "city": "$param2",
+          "period": "$param1",
+          "defaultPeriod": "today"
+        }
       }
     }
   ]
