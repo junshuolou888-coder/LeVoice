@@ -13,17 +13,45 @@ data class CommandConfig(
 data class CommandEntry(
     val id: String,
     val displayName: String,
-    val keywords: List<String>,
+    val keywords: List<String> = emptyList(),
     val endsWith: String? = null,
+    val regex: String? = null,
     val hotwords: List<String> = emptyList(),
     val action: CommandAction,
 )
 
+/**
+ * Universal action descriptor — fully driven by JSON.
+ *
+ * Supported types:
+ *   "activity"  / "intent"  → context.startActivity(buildIntent())
+ *   "broadcast"              → context.sendBroadcast(buildIntent())
+ *   "service"                → context.startService(buildIntent())
+ *   "uri"                    → ACTION_VIEW + Uri.parse(uri)
+ *   "builtin"                → hard-coded actions (volume, home …)
+ */
 data class CommandAction(
+    // ── dispatch type (required) ──
     val type: String,
+
+    // ── Intent construction (shared by activity / broadcast / service) ──
     val intentAction: String? = null,
+    val intentData: String? = null,
+    val intentType: String? = null,
     val intentPackage: String? = null,
     val intentClass: String? = null,
-    val intentExtras: Map<String, String>? = null,
+    val intentCategories: List<String>? = null,
+    val intentFlags: List<String>? = null,
+    val intentExtras: Map<String, Any>? = null,
+
+    // ── URI jump (type = "uri") ──
+    val uri: String? = null,
+
+    // ── builtin (type = "builtin") ──
     val builtinAction: String? = null,
+)
+
+data class CommandMatchResult(
+    val entry: CommandEntry,
+    val variables: Map<String, String> = emptyMap(),
 )

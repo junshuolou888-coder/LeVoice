@@ -3,6 +3,69 @@
   "hotwordsScore": 8.0,
   "commands": [
     {
+      "id": "search_actor_movies",
+      "displayName": "搜索演员影片",
+      "regex": "^(?:我想看|我想搜|我想找|搜索|搜一下|找一下)(.+?)的(?:电影|影片|电视剧|综艺|视频|戏|剧)$",
+      "action": {
+        "type": "activity",
+        "intentAction": "com.letv.leso.desktop.receiver",
+        "intentExtras": {
+          "type": 1,
+          "resource": 1,
+          "value": "{\"keyword\":\"$param1\",\"fulltext\":\"$param1\",\"isActorSearch\":true}"
+        }
+      },
+      "keywords": [
+        "__p1",
+        "__p2"
+      ]
+    },
+    {
+      "id": "search_general",
+      "displayName": "搜索",
+      "regex": "^(?:我想看|我想搜|我想找|搜索|搜一下|找一下)(?:电影|电视剧|综艺|动漫|纪录片)?(?!.*的(?:电影|影片|电视剧|综艺|视频|戏|剧)$)(.+)$",
+      "action": {
+        "type": "activity",
+        "intentAction": "com.letv.leso.desktop.receiver",
+        "intentExtras": {
+          "type": 1,
+          "resource": 1,
+          "value": "{\"keyword\":\"$param1\",\"fulltext\":\"$param1\",\"isActorSearch\":false}"
+        }
+      },
+      "keywords": [
+        "__p1"
+      ]
+    },
+    {
+      "id": "pano_detail",
+      "displayName": "普通详情页",
+      "regex": "^打开(.+)的?详情$",
+      "action": {
+        "type": "activity",
+        "intentAction": "com.letv.leso.desktop.receiver",
+        "intentExtras": {
+          "type": 2,
+          "resource": 1,
+          "value": "{}"
+        }
+      }
+    },
+    {
+      "id": "pano_star_detail",
+      "displayName": "明星详情页",
+      "regex": "^打开(.+)的?明星详情$",
+      "action": {
+        "type": "activity",
+        "intentAction": "com.letv.leso.desktop.receiver",
+        "intentExtras": {
+          "type": 4,
+          "resource": 1,
+          "value": "{}"
+        }
+      }
+    },
+    {
       "id": "open_desktop_home",
       "displayName": "首页",
       "keywords": [
@@ -26,7 +89,7 @@
         "联 播"
       ],
       "action": {
-        "type": "intent",
+        "type": "activity",
         "intentPackage": "com.stv.deskplatform",
         "intentClass": "com.stv.deskplatform.ui.activity.ExternalJumpActivity",
         "intentExtras": {
@@ -53,7 +116,7 @@
         "主 页"
       ],
       "action": {
-        "type": "intent",
+        "type": "activity",
         "intentAction": "com.stv.launcher.action.start",
         "intentExtras": {
           "type": "1",
@@ -76,7 +139,7 @@
         "儿 童"
       ],
       "action": {
-        "type": "intent",
+        "type": "activity",
         "intentAction": "com.stv.launcher.action.start",
         "intentExtras": {
           "type": "1",
@@ -99,7 +162,7 @@
         "电 视 剧"
       ],
       "action": {
-        "type": "intent",
+        "type": "activity",
         "intentAction": "com.stv.launcher.action.start",
         "intentExtras": {
           "type": "1",
@@ -122,7 +185,7 @@
         "电 影"
       ],
       "action": {
-        "type": "intent",
+        "type": "activity",
         "intentAction": "com.stv.launcher.action.start",
         "intentExtras": {
           "type": "1",
@@ -145,7 +208,7 @@
         "综 艺"
       ],
       "action": {
-        "type": "intent",
+        "type": "activity",
         "intentAction": "com.stv.launcher.action.start",
         "intentExtras": {
           "type": "1",
@@ -168,7 +231,7 @@
         "动 漫"
       ],
       "action": {
-        "type": "intent",
+        "type": "activity",
         "intentAction": "com.stv.launcher.action.start",
         "intentExtras": {
           "type": "1",
@@ -191,7 +254,7 @@
         "唱 吧"
       ],
       "action": {
-        "type": "intent",
+        "type": "activity",
         "intentAction": "com.stv.launcher.action.start",
         "intentExtras": {
           "type": "1",
@@ -214,7 +277,7 @@
         "知 识 到 家"
       ],
       "action": {
-        "type": "intent",
+        "type": "activity",
         "intentAction": "com.stv.launcher.action.start",
         "intentExtras": {
           "type": "1",
@@ -237,7 +300,7 @@
         "教 育"
       ],
       "action": {
-        "type": "intent",
+        "type": "activity",
         "intentAction": "com.stv.launcher.action.start",
         "intentExtras": {
           "type": "1",
@@ -260,7 +323,7 @@
         "应 用"
       ],
       "action": {
-        "type": "intent",
+        "type": "activity",
         "intentAction": "com.stv.launcher.action.start",
         "intentExtras": {
           "type": "1",
@@ -283,7 +346,7 @@
         "音 乐"
       ],
       "action": {
-        "type": "intent",
+        "type": "activity",
         "intentAction": "com.stv.launcher.action.start",
         "intentExtras": {
           "type": "1",
@@ -306,7 +369,7 @@
         "腾 讯 云 游 戏"
       ],
       "action": {
-        "type": "intent",
+        "type": "activity",
         "intentAction": "com.stv.launcher.action.start",
         "intentExtras": {
           "type": "1",
@@ -329,7 +392,7 @@
         "纪 录 片"
       ],
       "action": {
-        "type": "intent",
+        "type": "activity",
         "intentAction": "com.stv.launcher.action.start",
         "intentExtras": {
           "type": "1",
@@ -352,7 +415,7 @@
         "游 戏 电 竞"
       ],
       "action": {
-        "type": "intent",
+        "type": "activity",
         "intentAction": "com.stv.launcher.action.start",
         "intentExtras": {
           "type": "1",
@@ -375,7 +438,7 @@
         "健 康 养 生"
       ],
       "action": {
-        "type": "intent",
+        "type": "activity",
         "intentAction": "com.stv.launcher.action.start",
         "intentExtras": {
           "type": "1",
@@ -398,7 +461,7 @@
         "聚 合"
       ],
       "action": {
-        "type": "intent",
+        "type": "activity",
         "intentAction": "com.stv.launcher.action.start",
         "intentExtras": {
           "type": "1",
@@ -421,7 +484,7 @@
         "芒 果 热 播"
       ],
       "action": {
-        "type": "intent",
+        "type": "activity",
         "intentAction": "com.stv.launcher.action.start",
         "intentExtras": {
           "type": "1",
@@ -444,7 +507,7 @@
         "云 视 听"
       ],
       "action": {
-        "type": "intent",
+        "type": "activity",
         "intentAction": "com.stv.launcher.action.start",
         "intentExtras": {
           "type": "1",
@@ -467,7 +530,7 @@
         "广 场 舞"
       ],
       "action": {
-        "type": "intent",
+        "type": "activity",
         "intentAction": "com.stv.launcher.action.start",
         "intentExtras": {
           "type": "1",
@@ -487,7 +550,7 @@
         "宽 带 电 视 桌 面"
       ],
       "action": {
-        "type": "intent",
+        "type": "activity",
         "intentAction": "com.stv.launcher.action.start",
         "intentExtras": {
           "type": "1",
@@ -512,7 +575,7 @@
         "打 开 网 络 设 置"
       ],
       "action": {
-        "type": "intent",
+        "type": "activity",
         "intentAction": "android.settings.WIFI_SETTINGS"
       }
     },
@@ -526,7 +589,7 @@
         "打 开 蓝 牙 设 置"
       ],
       "action": {
-        "type": "intent",
+        "type": "activity",
         "intentAction": "android.settings.BLUETOOTH_SETTINGS"
       }
     },
@@ -598,7 +661,7 @@
         "打 开 声 音 设 置"
       ],
       "action": {
-        "type": "intent",
+        "type": "activity",
         "intentAction": "android.settings.SOUND_SETTINGS"
       }
     },
@@ -617,7 +680,7 @@
         "打 开 显 示 设 置"
       ],
       "action": {
-        "type": "intent",
+        "type": "activity",
         "intentAction": "android.settings.DISPLAY_SETTINGS"
       }
     },
@@ -633,7 +696,7 @@
         "应 用 管 理"
       ],
       "action": {
-        "type": "intent",
+        "type": "activity",
         "intentAction": "android.settings.APPLICATION_SETTINGS"
       }
     },
@@ -667,7 +730,7 @@
         "打 开 设 置"
       ],
       "action": {
-        "type": "intent",
+        "type": "activity",
         "intentAction": "android.settings.SETTINGS"
       }
     }

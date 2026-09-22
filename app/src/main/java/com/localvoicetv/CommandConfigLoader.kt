@@ -72,11 +72,18 @@ object CommandConfigLoader {
         val commands = (0 until commandsArray.length()).map { i ->
             val obj = commandsArray.getJSONObject(i)
 
-            val keywordsArray = obj.getJSONArray("keywords")
-            val keywords = (0 until keywordsArray.length()).map { j ->
-                keywordsArray.getString(j)
+            // keywords (optional)
+            val keywordsArray = obj.optJSONArray("keywords")
+            val keywords = if (keywordsArray != null) {
+                (0 until keywordsArray.length()).map { j -> keywordsArray.getString(j) }
+            } else {
+                emptyList()
             }
 
+            val endsWith = obj.optString("endsWith").ifEmpty { null }
+            val regex = obj.optString("regex").ifEmpty { null }
+
+            // hotwords (optional)
             val hotwordsArray = obj.optJSONArray("hotwords")
             val hotwords = if (hotwordsArray != null) {
                 (0 until hotwordsArray.length()).map { j -> hotwordsArray.getString(j) }
@@ -85,24 +92,42 @@ object CommandConfigLoader {
             }
 
             val actionObj = obj.getJSONObject("action")
-            
+
+            // intentExtras — preserve native types (Int, Boolean, String, …)
             val intentExtrasObj = actionObj.optJSONObject("intentExtras")
             val intentExtras = if (intentExtrasObj != null) {
-                val map = mutableMapOf<String, String>()
+                val map = mutableMapOf<String, Any>()
                 val keys = intentExtrasObj.keys()
                 while (keys.hasNext()) {
                     val key = keys.next()
-                    map[key] = intentExtrasObj.getString(key)
+                    map[key] = intentExtrasObj.get(key)
                 }
                 map
+            } else null
+
+            // intentCategories (optional string array)
+            val categoriesArray = actionObj.optJSONArray("intentCategories")
+            val intentCategories = if (categoriesArray != null) {
+                (0 until categoriesArray.length()).map { j -> categoriesArray.getString(j) }
+            } else null
+
+            // intentFlags (optional string array)
+            val flagsArray = actionObj.optJSONArray("intentFlags")
+            val intentFlags = if (flagsArray != null) {
+                (0 until flagsArray.length()).map { j -> flagsArray.getString(j) }
             } else null
 
             val action = CommandAction(
                 type = actionObj.getString("type"),
                 intentAction = actionObj.optString("intentAction").ifEmpty { null },
+                intentData = actionObj.optString("intentData").ifEmpty { null },
+                intentType = actionObj.optString("intentType").ifEmpty { null },
                 intentPackage = actionObj.optString("intentPackage").ifEmpty { null },
                 intentClass = actionObj.optString("intentClass").ifEmpty { null },
+                intentCategories = intentCategories,
+                intentFlags = intentFlags,
                 intentExtras = intentExtras,
+                uri = actionObj.optString("uri").ifEmpty { null },
                 builtinAction = actionObj.optString("builtinAction").ifEmpty { null },
             )
 
@@ -110,7 +135,8 @@ object CommandConfigLoader {
                 id = obj.getString("id"),
                 displayName = obj.getString("displayName"),
                 keywords = keywords,
-                endsWith = obj.optString("endsWith").ifEmpty { null },
+                endsWith = endsWith,
+                regex = regex,
                 hotwords = hotwords,
                 action = action,
             )
@@ -134,7 +160,7 @@ object CommandConfigLoader {
                 keywords = listOf("打开设置", "系统设置", "进入设置"),
                 endsWith = "设置",
                 hotwords = listOf("打 开 设 置"),
-                action = CommandAction(type = "intent", intentAction = "android.settings.SETTINGS"),
+                action = CommandAction(type = "activity", intentAction = "android.settings.SETTINGS"),
             ),
         ),
     )

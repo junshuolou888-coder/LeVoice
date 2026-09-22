@@ -124,17 +124,19 @@ class MainActivity : Activity(), SherpaSpeechRecognizer.Listener {
     override fun onFinalResult(text: String) {
         runOnUiThread {
             transcriptText.text = getString(R.string.recognized_format, text)
-            val entry = registry.match(text)
-            if (entry == null) {
+            val matchResult = registry.match(text)
+            if (matchResult == null) {
+                android.util.Log.i("MainActivity", "Match failed for text: $text")
                 statusText.text = getString(R.string.command_not_understood, text)
             } else {
                 try {
-                    executor.execute(entry.action)
-                    statusText.text = getString(R.string.status_executed, entry.displayName)
+                    android.util.Log.i("MainActivity", "Matched [${matchResult.entry.id}] with vars: ${matchResult.variables}")
+                    executor.execute(matchResult.entry.action, matchResult.variables)
+                    statusText.text = getString(R.string.status_executed, matchResult.entry.displayName)
                 } catch (e: Exception) {
                     statusText.text = getString(
                         R.string.command_failed,
-                        e.message ?: entry.displayName,
+                        e.message ?: matchResult.entry.displayName,
                     )
                 }
             }
