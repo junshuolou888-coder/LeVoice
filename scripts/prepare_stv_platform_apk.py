@@ -33,8 +33,8 @@ def main():
         parser.error('Input is not the STV compatibility build.')
     run([tools / 'zipalign', '-c', '-p', '4', args.input])
 
-    # Upload-only identity; this is NOT the TV platform key. Keep it out of Git.
-    private = root / '.tools/signing/stv-platform-upload'
+    # Upload-only identity; this is NOT the TV platform key. Versioned at the project owner's request.
+    private = root / 'signing/stv-platform-upload'
     private.mkdir(parents=True, exist_ok=True, mode=0o700)
     private.chmod(0o700)
     key = private / 'upload.p12'

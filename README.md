@@ -11,7 +11,7 @@
 
 ## 使用
 
-1. 将 `weather.example.json` 复制为 `weather.local.json`，由开发者填入有效天气凭据（文件不提交，构建时注入安装包）。然后用 Android Studio 打开本目录，或运行 `./gradlew assembleDebug`。
+1. 工程已包含 `weather.local.json`（按项目所有者要求提交，构建时注入安装包）；重新配置可参考 `weather.example.json`。然后用 Android Studio 打开本目录，或运行 `./gradlew assembleDebug`。
 2. 根据电视 ABI 安装 `app/build/outputs/apk/debug/` 中对应的 APK。
 3. 连接带麦克风的遥控器，首次使用时允许录音权限。
 4. 聚焦“开始说话”，按遥控器确认键，说出一条指令。
