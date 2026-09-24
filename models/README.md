@@ -20,6 +20,10 @@ APK 只包含所选模型，启动时从 APK assets 加载。电视上早期试�
 
 Gradle 在构建时检查模型 SHA-256，缺文件或校验不符会报错。切换不需要 `clean`；两次构建输出路径相同，如需同时保存安装包，先复制或重命名上一份 APK。
 
+## Git LFS
+
+2023/2025 的 ONNX 权重使用 Git LFS 保存。新机器先安装 Git LFS，克隆后运行 `git lfs install` 和 `git lfs pull`，确保取回真实权重；仅下载 GitHub 源码 ZIP 可能只得到指针文件。14M 权重仍以普通 Git 文件保存。构建前会校验 2023/2025 文件 SHA-256。
+
 ## 固定来源
 
 - [2023 官方模型](https://huggingface.co/k2-fsa/sherpa-onnx-streaming-zipformer-multi-zh-hans-2023-12-12/tree/ac54a23c9d106dfbd178be831329fabe261bac58)：原始文件名含 `epoch-20-avg-1-chunk-16-left-128`，工程内统一为上面的短文件名，内容不变。
