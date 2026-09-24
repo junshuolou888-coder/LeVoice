@@ -34,8 +34,8 @@ class SherpaSpeechRecognizer(
 
     private val executor = Executors.newSingleThreadExecutor()
     private val listening = AtomicBoolean(false)
-    private val recorderLock = Any()
-    private var activeRecorder: AudioRecord? = null
+    private val busy = AtomicBoolean(false)
+    @Volatile private var stopRequestedAt = 0L
 
     @Volatile
     private var recognizer: OnlineRecognizer? = null
@@ -113,23 +113,21 @@ class SherpaSpeechRecognizer(
             listener.onListeningChanged(false)
             return
         }
-        if (!listening.compareAndSet(false, true)) return
+        if (!busy.compareAndSet(false, true)) return
+        stopRequestedAt = 0L
+        listening.set(true)
 
         listener.onListeningChanged(true)
         executor.execute(::recordAndRecognize)
     }
 
     fun stopListening() {
-        listening.compareAndSet(true, false)
-        // Unblock a read waiting for remote packets, so service shutdown can release the model.
-        synchronized(recorderLock) {
-            try {
-                activeRecorder?.takeIf { it.recordingState == AudioRecord.RECORDSTATE_RECORDING }?.stop()
-            } catch (_: IllegalStateException) { }
-        }
+        if (listening.getAndSet(false)) stopRequestedAt = SystemClock.elapsedRealtime()
+        // Capture uses non-blocking reads and drains the hardware buffer itself.
+        // Never stop AudioRecord here: that would discard audio waiting behind the decoder.
     }
 
-    fun isListening(): Boolean = listening.get()
+    fun isListening(): Boolean = busy.get()
 
     fun release() {
         stopListening()
@@ -143,12 +141,17 @@ class SherpaSpeechRecognizer(
     private fun recordAndRecognize() {
         val currentRecognizer = recognizer ?: run {
             listening.set(false)
+            busy.set(false)
             listener.onListeningChanged(false)
             return
         }
         val stream = currentRecognizer.createStream(if (useEnhancedModel) "" else hotwords)
         var recorder: AudioRecord? = null
         var finalText = ""
+        var capture: Thread? = null
+        val queue = PcmQueue()
+        var decodedSamples = 0L
+        var decodeMs = 0L
 
         try {
             val minBufferBytes = AudioRecord.getMinBufferSize(
@@ -185,55 +188,75 @@ class SherpaSpeechRecognizer(
                 check(recorder.setPreferredDevice(remoteInput)) { "系统未接受遥控器录音设备" }
                 Log.i("VoiceRecognition", "Requested remote input: id=${remoteInput.id} type=${remoteInput.type}")
             }
-            synchronized(recorderLock) {
-                if (!listening.get()) return
-                activeRecorder = recorder
-                recorder.startRecording()
-            }
-
-            val pcm = ShortArray(CHUNK_SAMPLES)
+            if (!listening.get()) return
+            recorder.startRecording()
+            val input = recorder
+            capture = Thread({
+                var captureFailure: Throwable? = null
+                var capturedSamples = 0L
+                try {
+                    android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_AUDIO)
+                    val pcm = ShortArray(CHUNK_SAMPLES)
+                    var buffered = 0
+                    var levelAt = SystemClock.elapsedRealtime()
+                    var squares = 0.0
+                    var levelSamples = 0L
+                    var peak = 0
+                    var loggedInputId: Int? = null
+                    var drainStartedAt = 0L
+                    Log.d("VoiceRecognition", "Microphone started: 16000Hz mono PCM16; independent capture")
+                    while (true) {
+                        val draining = !listening.get()
+                        if (draining && drainStartedAt == 0L) drainStartedAt = SystemClock.elapsedRealtime()
+                        // Drain only already available PCM. A continuously producing HAL cannot keep us alive.
+                        if (draining && SystemClock.elapsedRealtime() - drainStartedAt > 250) break
+                        val offset = buffered
+                        val count = input.read(pcm, offset, pcm.size - offset, AudioRecord.READ_NON_BLOCKING)
+                        if (count < 0) {
+                            if (draining) break
+                            error("读取麦克风失败，错误码：$count")
+                        }
+                        if (count == 0) {
+                            if (draining) break
+                            Thread.sleep(5)
+                            continue
+                        }
+                        val routed = input.routedDevice
+                        if (routed != null) {
+                            check(remoteInput == null || routed.id == remoteInput.id) { "录音未连接到遥控器" }
+                            if (loggedInputId != routed.id) {
+                                Log.i("VoiceRecognition", "Actual input: id=${routed.id} type=${routed.type} name=${routed.productName}")
+                                loggedInputId = routed.id
+                            }
+                        }
+                        buffered += count
+                        if (buffered == pcm.size) { queue.offer(pcm.copyOf()); buffered = 0 }
+                        capturedSamples += count
+                        for (i in offset until offset + count) {
+                            val value = pcm[i].toInt()
+                            squares += value.toDouble() * value
+                            peak = max(peak, kotlin.math.abs(value))
+                        }
+                        levelSamples += count
+                        if (SystemClock.elapsedRealtime() - levelAt >= 1000) {
+                            Log.d("VoiceRecognition", "Audio level: samples=$levelSamples rms=${kotlin.math.sqrt(squares / levelSamples).toInt()} peak=$peak queuedMs=${queue.pendingSamples * 1000L / SAMPLE_RATE}")
+                            levelAt = SystemClock.elapsedRealtime(); squares = 0.0; levelSamples = 0; peak = 0
+                        }
+                    }
+                    if (buffered > 0) queue.offer(pcm.copyOf(buffered))
+                } catch (e: Throwable) { captureFailure = e }
+                finally {
+                    try { input.stop() } catch (_: IllegalStateException) { }
+                    queue.close(captureFailure)
+                    Log.i("VoiceRecognition", "Capture ended: audioMs=${capturedSamples * 1000 / SAMPLE_RATE} queuedMs=${queue.pendingSamples * 1000L / SAMPLE_RATE}")
+                }
+            }, "VoiceCapture").also { it.start() }
             var previousText = ""
-            var levelAt = SystemClock.elapsedRealtime()
-            var levelSquares = 0.0
-            var levelSamples = 0L
-            var levelPeak = 0
-            val audioDiagnostics = BuildConfig.DEBUG || BuildConfig.STV_INTEGRATION
-            var loggedInputId: Int? = null
-            if (audioDiagnostics) Log.d("VoiceRecognition", "Microphone started: 16000Hz mono PCM16")
-
-            while (listening.get()) {
-                val count = recorder.read(pcm, 0, pcm.size)
-                if (count <= 0) {
-                    if (listening.get()) error("读取麦克风失败，错误码：$count")
-                    break
-                }
-
-                val routedInput = recorder.routedDevice
-                if (routedInput != null) {
-                    check(remoteInput == null || routedInput.id == remoteInput.id) {
-                        "录音未连接到遥控器，系统切换到了其他输入设备"
-                    }
-                    if (audioDiagnostics && loggedInputId != routedInput.id) {
-                        Log.i("VoiceRecognition", "Actual input: id=${routedInput.id} type=${routedInput.type} name=${routedInput.productName}")
-                        loggedInputId = routedInput.id
-                    }
-                }
-
-                if (audioDiagnostics) {
-                    for (i in 0 until count) {
-                        val value = pcm[i].toInt()
-                        levelSquares += value.toDouble() * value
-                        levelPeak = max(levelPeak, kotlin.math.abs(value))
-                    }
-                    levelSamples += count
-                    if (SystemClock.elapsedRealtime() - levelAt >= 1000) {
-                        Log.d("VoiceRecognition", "Audio level: samples=$levelSamples rms=${kotlin.math.sqrt(levelSquares / levelSamples).toInt()} peak=$levelPeak")
-                        levelAt = SystemClock.elapsedRealtime()
-                        levelSquares = 0.0
-                        levelSamples = 0
-                        levelPeak = 0
-                    }
-                }
+            while (true) {
+                val pcm = queue.take() ?: break
+                val count = pcm.size
+                decodedSamples += count
+                val decodeStarted = SystemClock.elapsedRealtime()
                 val samples = FloatArray(count) { index -> pcm[index] / 32768.0f }
                 stream.acceptWaveform(samples, SAMPLE_RATE)
 
@@ -241,13 +264,14 @@ class SherpaSpeechRecognizer(
                     currentRecognizer.decode(stream)
                 }
 
+                decodeMs += SystemClock.elapsedRealtime() - decodeStarted
                 val text = currentRecognizer.getResult(stream).text.trim()
                 if (text.isNotEmpty() && text != previousText) {
                     previousText = text
                     listener.onPartialResult(text)
                 }
 
-                if (currentRecognizer.isEndpoint(stream)) {
+                if (!BuildConfig.STV_INTEGRATION && currentRecognizer.isEndpoint(stream)) {
                     if (text.isNotEmpty()) {
                         finalText = text
                         listening.set(false)
@@ -258,13 +282,18 @@ class SherpaSpeechRecognizer(
             }
 
             if (finalText.isEmpty()) {
+                val flushStarted = SystemClock.elapsedRealtime()
+                // Same tail padding as the offline model benchmark, with no wall-clock sleep.
+                stream.acceptWaveform(FloatArray(SAMPLE_RATE / 2), SAMPLE_RATE)
                 stream.inputFinished()
                 while (currentRecognizer.isReady(stream)) {
                     currentRecognizer.decode(stream)
                 }
                 finalText = currentRecognizer.getResult(stream).text.trim()
+                decodeMs += SystemClock.elapsedRealtime() - flushStarted
             }
 
+            Log.i("VoiceRecognition", "Decode ended: audioMs=${decodedSamples * 1000 / SAMPLE_RATE} decodeMs=$decodeMs afterReleaseMs=${if (stopRequestedAt == 0L) 0 else SystemClock.elapsedRealtime() - stopRequestedAt}")
             if (finalText.isNotEmpty()) {
                 listener.onFinalResult(finalText)
             }
@@ -272,9 +301,8 @@ class SherpaSpeechRecognizer(
             listener.onError(error)
         } finally {
             listening.set(false)
-            synchronized(recorderLock) {
-                if (activeRecorder === recorder) activeRecorder = null
-            }
+            capture?.join()
+            busy.set(false)
             try {
                 recorder?.takeIf {
                     it.recordingState == AudioRecord.RECORDSTATE_RECORDING

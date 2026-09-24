@@ -96,7 +96,7 @@ class WindowService : Service(), SherpaSpeechRecognizer.Listener {
         pressed = false
         main.removeCallbacks(timeout)
         if (recording) {
-            if (!completed) feedback.show("正在识别…", 6000)
+            if (!completed) feedback.show("正在处理您刚才说的话，请稍等…")
             engine.stop()
         } else if (!ready && !modelFailed) feedback.show("语音助手正在准备，就绪后请再按语音键", 4000)
         scheduleIdle()
@@ -120,7 +120,7 @@ class WindowService : Service(), SherpaSpeechRecognizer.Listener {
     override fun onPartialResult(text: String) = deliver {
         if (!cancelled) {
             Log.d("VoiceRecognition", "partial=$text")
-            feedback.show("正在听…\n$text")
+            feedback.show(if (pressed) "正在听…\n$text" else "正在处理…\n$text")
         }
     }
     override fun onFinalResult(text: String) = deliver {
