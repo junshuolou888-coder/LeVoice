@@ -1,5 +1,7 @@
 package com.localvoicetv
 
+import android.util.Log
+
 import org.json.JSONException
 import org.json.JSONObject
 import java.io.IOException
@@ -155,6 +157,7 @@ class QWeatherClient(
         cancellation.check()
         val cached = synchronized(cache) { cache[url.toString()] }
         if (cached != null && clock() - cached.time in 0 until ttl) {
+            Log.i("WeatherQuery", "cache hit stage=${if (path.startsWith("/geo/")) "city" else "weather"}")
             return Response(JSONObject(cached.body), cached.time, true)
         }
         val json = transport.get(url, mapOf("X-QW-Api-Key" to settings.apiKey), cancellation)
@@ -164,7 +167,10 @@ class QWeatherClient(
             json.has("error") -> json.getJSONObject("error").optInt("status", 500)
             else -> 200
         }
-        if (code != 200) throw WeatherException(statusMessage(code))
+        if (code != 200) {
+            Log.w("WeatherQuery", "API error status=$code")
+            throw WeatherException(statusMessage(code))
+        }
         val now = clock()
         synchronized(cache) {
             cache[url.toString()] = Cached(json.toString(), now)

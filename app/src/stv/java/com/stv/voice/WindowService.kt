@@ -28,6 +28,7 @@ class WindowService : Service(), SherpaSpeechRecognizer.Listener {
     private var cancelled = false
     private var destroyed = false
     private var modelFailed = false
+    private var weatherClient: QWeatherClient? = null
     private val timeout = Runnable { releasePress() }
     private val idle = Runnable { stopSelf() }
     private val screenOff = object : BroadcastReceiver() {
@@ -146,10 +147,13 @@ class WindowService : Service(), SherpaSpeechRecognizer.Listener {
     private fun queryWeather(params: Map<String, String>): CommandExecution {
         require(params.keys.all { it in setOf("city", "period", "defaultPeriod") }) { "天气参数不支持" }
         val period = WeatherPeriod.parse(params["period"].orEmpty().ifEmpty { params["defaultPeriod"].orEmpty() })
-        val client = QWeatherClient(WeatherSettingsStore(this).load().also { it.validate() })
+        val client = weatherClient ?: QWeatherClient(WeatherSettingsStore(this).load().also { it.validate() }).also { weatherClient = it }
+        val started = SystemClock.elapsedRealtime()
+        Log.i("WeatherQuery", "start period=${period.name} explicitCity=${!params["city"].isNullOrBlank()}")
         feedback.show("正在为您查询${params["city"].orEmpty()}${period.label}天气…", 15000)
         requests.submit({ cancellation -> client.query(params["city"].orEmpty(), period, cancellation) }) { result ->
             if (!destroyed && !cancelled) {
+                Log.i("WeatherQuery", "complete elapsedMs=${SystemClock.elapsedRealtime() - started} success=${result.isSuccess} error=${result.exceptionOrNull()?.javaClass?.simpleName.orEmpty()}")
                 feedback.show(result.fold({ it.displayText() }, {
                     if (it is AmbiguousCityException) "地区名称不明确，请补充省市后再查询"
                     else it.message ?: "天气查询失败，请稍后重试"

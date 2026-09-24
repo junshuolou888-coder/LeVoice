@@ -20,7 +20,7 @@ val stvIntegration = tvIntegration == "stv"
 // Android 12 accepts V1 for target 29; target 30+ requires a vendor V2+ signature.
 val stvTargetSdk = providers.gradleProperty("stvTargetSdk").orElse("29").get().toInt()
 require(stvTargetSdk in setOf(29, 31)) { "stvTargetSdk must be 29 (V1 portal) or 31 (vendor V2+ required)" }
-val stvVersionCode = providers.gradleProperty("stvVersionCode").orElse("33022825").get().toInt()
+val stvVersionCode = providers.gradleProperty("stvVersionCode").orElse("33022826").get().toInt()
 require(!stvIntegration || stvVersionCode > 33022820) { "stvVersionCode must exceed the installed OEM version 33022820" }
 val modelDirectory = rootProject.file("models/zipformer-zh-$speechModel")
 // Provisioned by the developer, never requested from the TV user.

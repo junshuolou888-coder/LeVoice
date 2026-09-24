@@ -1,5 +1,6 @@
 package com.localvoicetv
 
+import android.util.Log
 import org.json.JSONException
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
@@ -51,6 +52,14 @@ class JsonHttpClient(
         require(url.protocol == "https" && url.userInfo == null) { "联网接口必须使用 HTTPS" }
         cancellation.check()
         val connection = openConnection(url)
+        val started = System.nanoTime()
+        val stage = when {
+            url.path.startsWith("/geo/") -> "city"
+            url.path.startsWith("/weather/") -> "weather"
+            else -> "location"
+        }
+        var outcome = "cancelled"
+        Log.i("NetworkRequest", "start stage=$stage")
         try {
             cancellation.attach(connection)
             connection.requestMethod = "GET"
@@ -62,6 +71,7 @@ class JsonHttpClient(
             connection.setRequestProperty("Accept-Encoding", "gzip")
             headers.forEach { (key, value) -> connection.setRequestProperty(key, value) }
             val status = connection.responseCode
+            outcome = "http_$status"
             cancellation.check()
             if (status != HttpURLConnection.HTTP_OK) throw HttpStatusException(status)
             val raw = connection.inputStream
@@ -84,7 +94,11 @@ class JsonHttpClient(
             } catch (_: JSONException) {
                 throw IOException("接口返回的不是有效 JSON")
             }
+        } catch (error: Exception) {
+            if (error !is HttpStatusException) outcome = error.javaClass.simpleName
+            throw error
         } finally {
+            Log.i("NetworkRequest", "finish stage=$stage result=$outcome elapsedMs=${(System.nanoTime() - started) / 1_000_000}")
             cancellation.detach()
             connection.disconnect()
         }
