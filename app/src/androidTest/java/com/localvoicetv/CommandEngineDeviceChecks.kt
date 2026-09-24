@@ -16,11 +16,13 @@ import org.json.JSONObject
 class CommandEngineDeviceChecks : Instrumentation() {
     private var weatherUtterance: String? = null
     private var weatherUi = false
+    private var speechBenchmark: String? = null
 
     override fun onCreate(arguments: Bundle?) {
         super.onCreate(arguments)
         weatherUtterance = arguments?.getString("weatherUtterance")
         weatherUi = arguments?.getString("weatherUi") == "true"
+        speechBenchmark = arguments?.getString("speechBenchmark")
         start()
     }
 
@@ -34,6 +36,12 @@ class CommandEngineDeviceChecks : Instrumentation() {
         }
 
         try {
+            speechBenchmark?.let { profile ->
+                check(profile in setOf("baseline", "2023", "2025"))
+                output.append(SpeechModelDeviceBenchmark.run(targetContext, profile))
+                finish(Activity.RESULT_OK, Bundle().apply { putString("stream", output.toString()) })
+                return
+            }
             val context = RecordingContext(targetContext)
             val executor = CommandExecutor(context)
             val config = targetContext.assets.open("default_commands.json").bufferedReader().use {

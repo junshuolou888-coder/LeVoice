@@ -1,1 +1,5 @@
+# Preserve upstream model bytes for SHA-256 verification on every platform.
+*.onnx binary
+models/**/tokens.txt -text whitespace=cr-at-eol
+app/src/main/assets/**/tokens.txt -text
 models/**/*.onnx filter=lfs diff=lfs merge=lfs -text

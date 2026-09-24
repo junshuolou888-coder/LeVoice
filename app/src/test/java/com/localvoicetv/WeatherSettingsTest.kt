@@ -9,8 +9,17 @@ import org.robolectric.annotation.Config
 import java.io.File
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [23], manifest = Config.NONE)
+@Config(sdk = [28])
 class WeatherSettingsTest {
+    @Test fun cleanInstallUsesPackagedCredential() {
+        val context = RuntimeEnvironment.getApplication()
+        File(context.noBackupFilesDir, "weather.json").delete()
+        val loaded = WeatherSettingsStore(context).load()
+        loaded.validate()
+        assertTrue(loaded.apiKey.isNotEmpty())
+        assertEquals("", loaded.defaultCity)
+    }
+
     @Test fun configurationIsStoredPrivatelyAndExcludedFromBackups() {
         val context = RuntimeEnvironment.getApplication()
         val store = WeatherSettingsStore(context)

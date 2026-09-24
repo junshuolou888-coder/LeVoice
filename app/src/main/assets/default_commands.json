@@ -14,7 +14,8 @@
           "resource": 1,
           "value": "{\"keyword\":\"$param1\",\"fulltext\":\"$param1\",\"isActorSearch\":true}"
         }
-      }
+      },
+      "feedback": "好的，这就为您搜索$param1的$param2"
     },
     {
       "id": "search_general",
@@ -29,7 +30,8 @@
           "resource": 1,
           "value": "{\"keyword\":\"$param1\",\"fulltext\":\"$param1\",\"isActorSearch\":false}"
         }
-      }
+      },
+      "feedback": "好的，这就为您搜索$param1"
     },
     {
       "id": "pano_detail",
@@ -43,7 +45,8 @@
           "resource": 1,
           "value": "{}"
         }
-      }
+      },
+      "feedback": "好的，这就为您打开详情"
     },
     {
       "id": "pano_star_detail",
@@ -58,7 +61,8 @@
           "resource": 1,
           "value": "{}"
         }
-      }
+      },
+      "feedback": "好的，这就为您打开明星详情"
     },
     {
       "id": "open_desktop_home",
@@ -90,7 +94,8 @@
         "intentExtras": {
           "toDesktopName": "com.letv.android.tv.letvlive"
         }
-      }
+      },
+      "feedback": "好的，这就为您切换到首页桌面"
     },
     {
       "id": "open_desktop_video2",
@@ -117,7 +122,8 @@
           "type": "1",
           "value": "{\"pluginid\":\"com.stv.template.video2\"}"
         }
-      }
+      },
+      "feedback": "好的，这就为您切换到精选桌面"
     },
     {
       "id": "open_desktop_kids",
@@ -140,7 +146,8 @@
           "type": "1",
           "value": "{\"pluginid\":\"com.stv.template.kids\"}"
         }
-      }
+      },
+      "feedback": "好的，这就为您切换到儿童桌面"
     },
     {
       "id": "open_desktop_teleplay",
@@ -163,7 +170,8 @@
           "type": "1",
           "value": "{\"pluginid\":\"com.stv.template.teleplay\"}"
         }
-      }
+      },
+      "feedback": "好的，这就为您切换到电视剧桌面"
     },
     {
       "id": "open_desktop_movie",
@@ -186,7 +194,8 @@
           "type": "1",
           "value": "{\"pluginid\":\"com.stv.template.movie\"}"
         }
-      }
+      },
+      "feedback": "好的，这就为您切换到电影桌面"
     },
     {
       "id": "open_desktop_variety",
@@ -209,7 +218,8 @@
           "type": "1",
           "value": "{\"pluginid\":\"com.stv.template.variety\"}"
         }
-      }
+      },
+      "feedback": "好的，这就为您切换到综艺桌面"
     },
     {
       "id": "open_desktop_comic",
@@ -232,7 +242,8 @@
           "type": "1",
           "value": "{\"pluginid\":\"com.stv.template.comic\"}"
         }
-      }
+      },
+      "feedback": "好的，这就为您切换到动漫桌面"
     },
     {
       "id": "open_desktop_changba",
@@ -255,7 +266,8 @@
           "type": "1",
           "value": "{\"pluginid\":\"com.stv.template.changba\"}"
         }
-      }
+      },
+      "feedback": "好的，这就为您切换到唱吧桌面"
     },
     {
       "id": "open_desktop_courseshop",
@@ -278,7 +290,8 @@
           "type": "1",
           "value": "{\"pluginid\":\"com.stv.template.courseshop\"}"
         }
-      }
+      },
+      "feedback": "好的，这就为您切换到知识到家桌面"
     },
     {
       "id": "open_desktop_school",
@@ -301,7 +314,8 @@
           "type": "1",
           "value": "{\"pluginid\":\"com.stv.template.school\"}"
         }
-      }
+      },
+      "feedback": "好的，这就为您切换到教育桌面"
     },
     {
       "id": "open_desktop_app",
@@ -324,7 +338,8 @@
           "type": "1",
           "value": "{\"pluginid\":\"com.stv.template.app\"}"
         }
-      }
+      },
+      "feedback": "好的，这就为您切换到应用桌面"
     },
     {
       "id": "open_desktop_kugou",
@@ -347,7 +362,8 @@
           "type": "1",
           "value": "{\"pluginid\":\"com.stv.template.kugou\"}"
         }
-      }
+      },
+      "feedback": "好的，这就为您切换到音乐桌面"
     },
     {
       "id": "open_desktop_cloudgame",
@@ -370,7 +386,8 @@
           "type": "1",
           "value": "{\"pluginid\":\"com.stv.template.cloudgame\"}"
         }
-      }
+      },
+      "feedback": "好的，这就为您切换到腾讯云游戏桌面"
     },
     {
       "id": "open_desktop_documentary",
@@ -393,7 +410,8 @@
           "type": "1",
           "value": "{\"pluginid\":\"com.stv.template.documentary\"}"
         }
-      }
+      },
+      "feedback": "好的，这就为您切换到纪录片桌面"
     },
     {
       "id": "open_desktop_game",
@@ -416,7 +434,8 @@
           "type": "1",
           "value": "{\"pluginid\":\"com.stv.template.game\"}"
         }
-      }
+      },
+      "feedback": "好的，这就为您切换到游戏电竞桌面"
     },
     {
       "id": "open_desktop_health",
@@ -439,7 +458,8 @@
           "type": "1",
           "value": "{\"pluginid\":\"com.stv.template.health\"}"
         }
-      }
+      },
+      "feedback": "好的，这就为您切换到健康养生桌面"
     },
     {
       "id": "open_desktop_combine",
@@ -462,7 +482,8 @@
           "type": "1",
           "value": "{\"pluginid\":\"com.stv.template.combine\"}"
         }
-      }
+      },
+      "feedback": "好的，这就为您切换到聚合桌面"
     },
     {
       "id": "open_desktop_mgtv",
@@ -485,7 +506,8 @@
           "type": "1",
           "value": "{\"pluginid\":\"com.stv.template.mgtv\"}"
         }
-      }
+      },
+      "feedback": "好的，这就为您切换到芒果热播桌面"
     },
     {
       "id": "open_desktop_tencent",
@@ -508,7 +530,8 @@
           "type": "1",
           "value": "{\"pluginid\":\"com.stv.template.tencent\"}"
         }
-      }
+      },
+      "feedback": "好的，这就为您切换到云视听桌面"
     },
     {
       "id": "open_desktop_squaredance",
@@ -531,7 +554,8 @@
           "type": "1",
           "value": "{\"pluginid\":\"com.stv.template.squaredance\"}"
         }
-      }
+      },
+      "feedback": "好的，这就为您切换到广场舞桌面"
     },
     {
       "id": "open_desktop_gitv",
@@ -551,7 +575,8 @@
           "type": "1",
           "value": "{\"pluginid\":\"com.stv.template.gitv\"}"
         }
-      }
+      },
+      "feedback": "好的，这就为您切换到宽带电视桌面"
     },
     {
       "id": "open_network_settings",
@@ -572,7 +597,8 @@
       "action": {
         "type": "activity",
         "intentAction": "android.settings.WIFI_SETTINGS"
-      }
+      },
+      "feedback": "好的，这就为您打开网络设置"
     },
     {
       "id": "open_bluetooth_settings",
@@ -586,7 +612,8 @@
       "action": {
         "type": "activity",
         "intentAction": "android.settings.BLUETOOTH_SETTINGS"
-      }
+      },
+      "feedback": "好的，这就为您打开蓝牙设置"
     },
     {
       "id": "toggle_mute",
@@ -603,7 +630,8 @@
       "action": {
         "type": "builtin",
         "builtinAction": "toggle_mute"
-      }
+      },
+      "feedback": "好的，已切换静音状态"
     },
     {
       "id": "volume_up",
@@ -622,7 +650,8 @@
       "action": {
         "type": "builtin",
         "builtinAction": "volume_up"
-      }
+      },
+      "feedback": "好的，音量已调大"
     },
     {
       "id": "volume_down",
@@ -641,7 +670,8 @@
       "action": {
         "type": "builtin",
         "builtinAction": "volume_down"
-      }
+      },
+      "feedback": "好的，音量已调小"
     },
     {
       "id": "open_sound_settings",
@@ -658,7 +688,8 @@
       "action": {
         "type": "activity",
         "intentAction": "android.settings.SOUND_SETTINGS"
-      }
+      },
+      "feedback": "好的，这就为您打开声音设置"
     },
     {
       "id": "open_display_settings",
@@ -677,7 +708,8 @@
       "action": {
         "type": "activity",
         "intentAction": "android.settings.DISPLAY_SETTINGS"
-      }
+      },
+      "feedback": "好的，这就为您打开显示设置"
     },
     {
       "id": "open_app_settings",
@@ -692,7 +724,8 @@
       "action": {
         "type": "activity",
         "intentAction": "android.settings.APPLICATION_SETTINGS"
-      }
+      },
+      "feedback": "好的，这就为您打开应用管理"
     },
     {
       "id": "go_home",
@@ -709,7 +742,8 @@
       "action": {
         "type": "builtin",
         "builtinAction": "go_home"
-      }
+      },
+      "feedback": "好的，这就为您返回首页"
     },
     {
       "id": "open_settings",
@@ -726,7 +760,8 @@
       "action": {
         "type": "activity",
         "intentAction": "android.settings.SETTINGS"
-      }
+      },
+      "feedback": "好的，这就为您打开系统设置"
     },
     {
       "id": "check_weather_city",

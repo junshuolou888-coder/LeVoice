@@ -58,7 +58,7 @@ class WeatherController(private val activity: Activity, private val status: (Str
         return CommandExecution.PENDING
     }
 
-    fun showSettings() {
+    fun showSettings(onDismiss: (() -> Unit)? = null) {
         cancel()
         val existing = try { store.load() } catch (e: IllegalStateException) {
             status(e.message.orEmpty())
@@ -91,6 +91,7 @@ class WeatherController(private val activity: Activity, private val status: (Str
         val settingsDialog = AlertDialog.Builder(activity).setTitle("天气设置").setView(scroll)
             .setPositiveButton("保存", null).setNegativeButton("取消", null).create()
         dialog = settingsDialog
+        settingsDialog.setOnDismissListener { onDismiss?.invoke() }
         settingsDialog.setOnShowListener {
             settingsDialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 try {

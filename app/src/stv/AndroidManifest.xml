@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:sharedUserId="android.uid.system">
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <application android:allowBackup="false" tools:replace="android:allowBackup">
+        <activity android:name="com.localvoicetv.MainActivity"
+            android:theme="@android:style/Theme.NoDisplay" />
+        <activity android:name="com.stv.voice.VoiceSettingsActivity" android:exported="false" />
+        <!-- System policy starts this exact component. Same system UID, no public IPC. -->
+        <service
+            android:name="com.stv.voice.WindowService"
+            android:exported="false"
+            android:foregroundServiceType="microphone" />
+        <!-- OEM dispatch replaces accessibility key interception in this build. -->
+        <service android:name="com.localvoicetv.RemoteVoiceKeyService" tools:node="remove" />
+    </application>
+</manifest>

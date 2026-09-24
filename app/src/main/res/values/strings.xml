@@ -4,7 +4,7 @@
     <string name="title">本地语音助手</string>
     <string name="subtitle">语音识别在本地完成，天气查询需要联网</string>
     <string name="weather_settings">天气设置</string>
-    <string name="status_loading">正在加载本地中文模型…</string>
+    <string name="status_loading">语音助手正在准备，请稍等…</string>
     <string name="status_ready">准备就绪，请按确认键开始说话</string>
     <string name="status_listening">正在聆听…说完后稍等片刻</string>
     <string name="status_stopping">正在处理语音…</string>
@@ -12,7 +12,7 @@
     <string name="status_no_microphone">没有检测到可用麦克风，请连接带麦克风的遥控器</string>
     <string name="status_model_error">模型加载失败：%1$s</string>
     <string name="status_audio_error">录音失败：%1$s</string>
-    <string name="status_executed">已执行：%1$s</string>
+    <string name="status_executed">好的，这就为您%1$s</string>
     <string name="recognized_placeholder">识别结果会显示在这里</string>
     <string name="recognized_format">“%1$s”</string>
     <string name="listen">开始说话</string>
@@ -20,7 +20,7 @@
     <string name="open_settings">直接打开设置</string>
     <string name="commands_title">你可以这样说</string>
     <string name="commands">打开设置　·　打开网络设置　·　打开蓝牙设置\n打开声音设置　·　打开显示设置　·　返回主页\n增大音量　·　减小音量　·　静音</string>
-    <string name="command_not_understood">暂不支持“%1$s”</string>
+    <string name="command_not_understood">抱歉，还没明白“%1$s”，请换个说法</string>
     <string name="command_failed">无法执行该指令：%1$s</string>
     <string name="command_open_network">打开网络设置</string>
     <string name="command_open_bluetooth">打开蓝牙设置</string>
@@ -33,5 +33,8 @@
     <string name="command_volume_down">减小音量</string>
     <string name="command_mute">切换静音</string>
     <string name="permission_denied">麦克风权限被拒绝，请在系统设置中允许</string>
-    <string name="model_license">语音模型：sherpa-onnx streaming Zipformer zh 14M</string>
+    <string name="model_loading">正在加载本地语音模型</string>
+    <string name="model_description">语音模型：%1$s</string>
+    <string name="remote_voice_keys_label">本地语音助手 · 遥控器语音键</string>
+    <string name="remote_voice_keys_description">接收遥控器语音键，按住开始说话，松开结束。不读取屏幕内容，其他按键正常使用。</string>
 </resources>

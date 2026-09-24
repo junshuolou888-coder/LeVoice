@@ -22,7 +22,7 @@ class WeatherSettings(
         require(apiKey.length <= 512) { "API KEY 格式不正确" }
         require(defaultCity.length <= 60) { "默认城市名称过长" }
         if (requireCredential) {
-            require(apiKey.isNotEmpty()) { "请先打开「天气设置」填写 API KEY" }
+            require(apiKey.isNotEmpty()) { "天气服务暂不可用，请稍后再试" }
             require(!Regex("Q[A-Za-z0-9]{9}").matches(apiKey)) {
                 "这里需要 API KEY，请勿填写开发者 ID 或凭据 ID"
             }
@@ -35,17 +35,23 @@ class WeatherSettings(
 }
 
 /** App-private, excluded from Android backups; never stored in the voice command JSON. */
-class WeatherSettingsStore(context: Context) {
+class WeatherSettingsStore(private val context: Context) {
     private val file = AtomicFile(File(context.noBackupFilesDir, "weather.json"))
 
     fun load(): WeatherSettings {
-        if (!file.baseFile.exists()) return WeatherSettings()
+        if (!file.baseFile.exists()) return try {
+            val json = context.assets.open("weather-defaults.json").bufferedReader().use { JSONObject(it.readText()) }
+            WeatherSettings(json.getString("host"), json.getString("apiKey"), json.optString("defaultCity", ""))
+                .also { it.validate() }
+        } catch (_: Exception) {
+            throw IllegalStateException("天气服务暂不可用，请稍后再试")
+        }
         return try {
             val json = JSONObject(String(file.readFully(), Charsets.UTF_8))
             WeatherSettings(json.getString("host"), json.getString("apiKey"), json.optString("defaultCity", ""))
                 .also { it.validate(requireCredential = false) }
         } catch (_: Exception) {
-            throw IllegalStateException("天气设置文件损坏，请重新填写并保存")
+            throw IllegalStateException("天气服务暂不可用，请稍后再试")
         }
     }
 

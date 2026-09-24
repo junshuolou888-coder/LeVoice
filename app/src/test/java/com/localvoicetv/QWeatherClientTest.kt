@@ -101,10 +101,11 @@ class QWeatherClientTest {
     }
 
     @Test fun apiErrorsAndTimeoutsHaveUsefulMessagesWithoutCredentials() {
-        for ((status, text) in listOf(401 to "认证失败", 403 to "拒绝请求", 429 to "限制", 500 to "暂时不可用")) {
+        for ((status, text) in listOf(401 to "天气服务暂不可用", 403 to "天气服务暂不可用", 429 to "限制", 500 to "暂时不可用")) {
             val client = QWeatherClient(settings, JsonTransport { _, _, _ -> throw HttpStatusException(status) }, { epoch }, noIp)
             val message = assertThrows(WeatherException::class.java) { client.query("北京", WeatherPeriod.CURRENT, token) }.message!!
             assertTrue(message.contains(text)); assertFalse(message.contains(settings.apiKey))
+            assertFalse(message.contains("API KEY"))
         }
         val client = QWeatherClient(settings, JsonTransport { _, _, _ -> throw SocketTimeoutException() }, { epoch }, noIp)
         assertTrue(assertThrows(WeatherException::class.java) { client.query("北京", WeatherPeriod.CURRENT, token) }.message!!.contains("超时"))

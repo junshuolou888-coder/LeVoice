@@ -5,10 +5,11 @@ import android.app.Activity
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.WindowManager
+import android.view.KeyEvent
 import android.widget.Button
 import android.widget.TextView
 
-class MainActivity : Activity(), SherpaSpeechRecognizer.Listener {
+class MainActivity : Activity(), SherpaSpeechRecognizer.Listener, RemoteVoiceKeys.Listener {
     private lateinit var statusText: TextView
     private lateinit var transcriptText: TextView
     private lateinit var commandsText: TextView
@@ -23,9 +24,17 @@ class MainActivity : Activity(), SherpaSpeechRecognizer.Listener {
     @Volatile
     private var modelReady = false
     private var screenActive = false
+    private var remoteKeyRecording = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (BuildConfig.STV_INTEGRATION) {
+            val service = android.content.Intent("com.localvoicetv.PREPARE_VOICE")
+                .setClassName(this, "com.stv.voice.WindowService")
+            if (android.os.Build.VERSION.SDK_INT >= 26) startForegroundService(service) else startService(service)
+            finish()
+            return
+        }
         setContentView(R.layout.activity_main)
 
         statusText = findViewById(R.id.statusText)
@@ -39,7 +48,7 @@ class MainActivity : Activity(), SherpaSpeechRecognizer.Listener {
         registry = CommandRegistry(config)
         weather = WeatherController(this) { statusText.text = it }
         executor = CommandExecutor(this, mapOf("check_weather" to weather::query))
-        findViewById<Button>(R.id.weatherSettingsButton).setOnClickListener { weather.showSettings() }
+        findViewById<Button>(R.id.weatherSettingsButton).visibility = android.view.View.GONE
 
         // Update the "你可以这样说" panel from config
         commandsText.text = registry.allDisplayNames().joinToString("　·　")
@@ -75,16 +84,25 @@ class MainActivity : Activity(), SherpaSpeechRecognizer.Listener {
 
     override fun onStart() {
         super.onStart()
+        if (BuildConfig.STV_INTEGRATION) return
         screenActive = true
+        RemoteVoiceKeys.attach(this)
     }
 
     override fun onStop() {
+        if (BuildConfig.STV_INTEGRATION) { super.onStop(); return }
         screenActive = false
+        RemoteVoiceKeys.detach(this)
+        if (remoteKeyRecording) {
+            remoteKeyRecording = false
+            speechRecognizer.stopListening()
+        }
         weather.cancel()
         super.onStop()
     }
 
     override fun onDestroy() {
+        if (BuildConfig.STV_INTEGRATION) { super.onDestroy(); return }
         weather.close()
         speechRecognizer.release()
         super.onDestroy()
@@ -111,6 +129,8 @@ class MainActivity : Activity(), SherpaSpeechRecognizer.Listener {
             modelReady = true
             listenButton.isEnabled = true
             if (statusText.text == getString(R.string.status_loading)) statusText.setText(R.string.status_ready)
+            findViewById<TextView>(R.id.modelDescriptionText).text =
+                getString(R.string.model_description, speechRecognizer.modelDescription)
             listenButton.requestFocus()
         }
     }
@@ -134,14 +154,14 @@ class MainActivity : Activity(), SherpaSpeechRecognizer.Listener {
     }
 
     override fun onPartialResult(text: String) {
-        if (BuildConfig.DEBUG) android.util.Log.d("VoiceRecognition", "partial=$text")
+        if (BuildConfig.DEBUG || BuildConfig.STV_INTEGRATION) android.util.Log.d("VoiceRecognition", "partial=$text")
         runOnUiThread {
             transcriptText.text = getString(R.string.recognized_format, text)
         }
     }
 
     override fun onFinalResult(text: String) {
-        if (BuildConfig.DEBUG) android.util.Log.d("VoiceRecognition", "final=$text")
+        if (BuildConfig.DEBUG || BuildConfig.STV_INTEGRATION) android.util.Log.d("VoiceRecognition", "final=$text")
         runOnUiThread {
             if (!screenActive || isDestroyed || isFinishing) return@runOnUiThread
             weather.cancel()
@@ -155,7 +175,7 @@ class MainActivity : Activity(), SherpaSpeechRecognizer.Listener {
                     android.util.Log.i("MainActivity", "Matched [${matchResult.entry.id}] with vars: ${matchResult.variables}")
                     val execution = executor.execute(matchResult.entry.action, matchResult.variables)
                     if (execution == CommandExecution.COMPLETED) {
-                        statusText.text = getString(R.string.status_executed, matchResult.entry.displayName)
+                        statusText.text = CommandFeedback.success(matchResult)
                     }
                 } catch (e: Exception) {
                     statusText.text = getString(
@@ -182,6 +202,35 @@ class MainActivity : Activity(), SherpaSpeechRecognizer.Listener {
                 )
             }
         }
+    }
+
+    override fun onRemoteVoiceKey(down: Boolean) {
+        if (down) {
+            if (!screenActive || speechRecognizer.isListening()) return
+            if (!modelReady) {
+                android.widget.Toast.makeText(this, "模型正在加载，准备就绪后请再按语音键", android.widget.Toast.LENGTH_SHORT).show()
+                return
+            }
+            // Permission dialogs cannot preserve a physical press; let the user retry afterward.
+            if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+                statusText.setText(R.string.status_permission)
+                return
+            }
+            remoteKeyRecording = true
+            startListening()
+        } else if (remoteKeyRecording) {
+            remoteKeyRecording = false
+            speechRecognizer.stopListening()
+        }
+    }
+
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        if (RemoteVoiceKeys.accepts(event.keyCode) &&
+            (event.action == KeyEvent.ACTION_DOWN || event.action == KeyEvent.ACTION_UP)) {
+            if (event.repeatCount == 0) onRemoteVoiceKey(event.action == KeyEvent.ACTION_DOWN)
+            return true
+        }
+        return super.dispatchKeyEvent(event)
     }
 
     private fun ensureMicrophonePermissionAndStart() {

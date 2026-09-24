@@ -16,5 +16,5 @@ captures/
 *.ap_
 *.aab
 
-# Local weather credential; never commit or package it.
+# Local weather credential; never commit it; build injects it into private distribution APK assets.
 weather.local.json

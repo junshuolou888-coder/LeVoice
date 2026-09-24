@@ -3,8 +3,11 @@ package com.localvoicetv
 import android.content.Context
 import android.content.pm.PackageManager
 import android.media.AudioFormat
+import android.media.AudioManager
 import android.media.AudioRecord
 import android.media.MediaRecorder
+import android.os.SystemClock
+import android.util.Log
 import com.k2fsa.sherpa.onnx.EndpointConfig
 import com.k2fsa.sherpa.onnx.EndpointRule
 import com.k2fsa.sherpa.onnx.FeatureConfig
@@ -31,30 +34,39 @@ class SherpaSpeechRecognizer(
 
     private val executor = Executors.newSingleThreadExecutor()
     private val listening = AtomicBoolean(false)
+    private val recorderLock = Any()
+    private var activeRecorder: AudioRecord? = null
 
     @Volatile
     private var recognizer: OnlineRecognizer? = null
 
     private var hotwords: String = ""
     private var hotwordsScore: Float = 8.0f
+    private var useEnhancedModel = false
+
+    @Volatile
+    var modelDescription: String = "中文轻量模型"
+        private set
 
     fun initialize(hotwords: String, hotwordsScore: Float) {
         this.hotwords = hotwords
         this.hotwordsScore = hotwordsScore
         executor.execute {
             try {
-                val modelDir =
-                    "sherpa-onnx-streaming-zipformer-zh-14M-2023-02-23-mobile"
+                val started = SystemClock.elapsedRealtime()
+                val enhanced = SpeechModelFiles.profiles.firstOrNull { it.id == BuildConfig.SPEECH_MODEL }
+                useEnhancedModel = enhanced != null
+                val modelDir = if (useEnhancedModel) "speech-model" else SpeechModelFiles.LEGACY
                 val modelConfig = OnlineModelConfig(
                     transducer = OnlineTransducerModelConfig(
-                        encoder = "$modelDir/encoder-epoch-99-avg-1.int8.onnx",
-                        decoder = "$modelDir/decoder-epoch-99-avg-1.onnx",
-                        joiner = "$modelDir/joiner-epoch-99-avg-1.int8.onnx",
+                        encoder = "$modelDir/" + if (useEnhancedModel) "encoder.int8.onnx" else "encoder-epoch-99-avg-1.int8.onnx",
+                        decoder = "$modelDir/" + if (useEnhancedModel) "decoder.onnx" else "decoder-epoch-99-avg-1.onnx",
+                        joiner = "$modelDir/" + if (useEnhancedModel) "joiner.int8.onnx" else "joiner-epoch-99-avg-1.int8.onnx",
                     ),
                     tokens = "$modelDir/tokens.txt",
                     numThreads = min(4, max(1, Runtime.getRuntime().availableProcessors() / 2)),
                     debug = false,
-                    modelType = "zipformer",
+                    modelType = enhanced?.modelType ?: "zipformer",
                     modelingUnit = "cjkchar",
                 )
                 val config = OnlineRecognizerConfig(
@@ -70,7 +82,8 @@ class SherpaSpeechRecognizer(
                         rule3 = EndpointRule(false, 0.0f, 12.0f),
                     ),
                     enableEndpoint = true,
-                    decodingMethod = "modified_beam_search",
+                    // Bundled Zipformer models use the upstream greedy decoder without command hotwords.
+                    decodingMethod = if (useEnhancedModel) "greedy_search" else "modified_beam_search",
                     maxActivePaths = 4,
                     hotwordsScore = this.hotwordsScore,
                 )
@@ -78,6 +91,8 @@ class SherpaSpeechRecognizer(
                     assetManager = context.assets,
                     config = config,
                 )
+                modelDescription = enhanced?.description ?: "中文轻量模型 · 14M"
+                Log.i("VoiceRecognition", "Model ready: $modelDescription; loadMs=${SystemClock.elapsedRealtime() - started}")
                 listener.onModelReady()
             } catch (error: Throwable) {
                 listener.onError(error)
@@ -88,12 +103,14 @@ class SherpaSpeechRecognizer(
     fun startListening() {
         if (recognizer == null) {
             listener.onError(IllegalStateException("语音模型尚未加载完成"))
+            listener.onListeningChanged(false)
             return
         }
         if (context.checkSelfPermission(android.Manifest.permission.RECORD_AUDIO) !=
             PackageManager.PERMISSION_GRANTED
         ) {
             listener.onError(SecurityException("没有麦克风权限"))
+            listener.onListeningChanged(false)
             return
         }
         if (!listening.compareAndSet(false, true)) return
@@ -104,6 +121,12 @@ class SherpaSpeechRecognizer(
 
     fun stopListening() {
         listening.compareAndSet(true, false)
+        // Unblock a read waiting for remote packets, so service shutdown can release the model.
+        synchronized(recorderLock) {
+            try {
+                activeRecorder?.takeIf { it.recordingState == AudioRecord.RECORDSTATE_RECORDING }?.stop()
+            } catch (_: IllegalStateException) { }
+        }
     }
 
     fun isListening(): Boolean = listening.get()
@@ -123,7 +146,7 @@ class SherpaSpeechRecognizer(
             listener.onListeningChanged(false)
             return
         }
-        val stream = currentRecognizer.createStream(hotwords)
+        val stream = currentRecognizer.createStream(if (useEnhancedModel) "" else hotwords)
         var recorder: AudioRecord? = null
         var finalText = ""
 
@@ -144,17 +167,39 @@ class SherpaSpeechRecognizer(
                         .setChannelMask(AudioFormat.CHANNEL_IN_MONO)
                         .build(),
                 )
-                .setBufferSizeInBytes(max(minBufferBytes * 2, CHUNK_SAMPLES * 4))
+                // Streaming encoder work arrives in bursts; retain audio while a chunk decodes.
+                // Reading still uses 100 ms chunks, so this capacity adds no fixed waiting time.
+                .setBufferSizeInBytes(max(minBufferBytes * 2, SAMPLE_RATE * 2 * 2))
                 .build()
 
             require(recorder.state == AudioRecord.STATE_INITIALIZED) {
                 "麦克风初始化失败"
             }
 
-            recorder.startRecording()
+            // The default MIC route can prefer a silent USB receiver over the TV's BLE HAL.
+            val remoteInput = if (BuildConfig.STV_INTEGRATION) {
+                val manager = context.getSystemService(AudioManager::class.java)
+                StvAudioInput.select(manager.getDevices(AudioManager.GET_DEVICES_INPUTS).toList())
+            } else null
+            if (remoteInput != null) {
+                check(recorder.setPreferredDevice(remoteInput)) { "系统未接受遥控器录音设备" }
+                Log.i("VoiceRecognition", "Requested remote input: id=${remoteInput.id} type=${remoteInput.type}")
+            }
+            synchronized(recorderLock) {
+                if (!listening.get()) return
+                activeRecorder = recorder
+                recorder.startRecording()
+            }
 
             val pcm = ShortArray(CHUNK_SAMPLES)
             var previousText = ""
+            var levelAt = SystemClock.elapsedRealtime()
+            var levelSquares = 0.0
+            var levelSamples = 0L
+            var levelPeak = 0
+            val audioDiagnostics = BuildConfig.DEBUG || BuildConfig.STV_INTEGRATION
+            var loggedInputId: Int? = null
+            if (audioDiagnostics) Log.d("VoiceRecognition", "Microphone started: 16000Hz mono PCM16")
 
             while (listening.get()) {
                 val count = recorder.read(pcm, 0, pcm.size)
@@ -163,6 +208,32 @@ class SherpaSpeechRecognizer(
                     break
                 }
 
+                val routedInput = recorder.routedDevice
+                if (routedInput != null) {
+                    check(remoteInput == null || routedInput.id == remoteInput.id) {
+                        "录音未连接到遥控器，系统切换到了其他输入设备"
+                    }
+                    if (audioDiagnostics && loggedInputId != routedInput.id) {
+                        Log.i("VoiceRecognition", "Actual input: id=${routedInput.id} type=${routedInput.type} name=${routedInput.productName}")
+                        loggedInputId = routedInput.id
+                    }
+                }
+
+                if (audioDiagnostics) {
+                    for (i in 0 until count) {
+                        val value = pcm[i].toInt()
+                        levelSquares += value.toDouble() * value
+                        levelPeak = max(levelPeak, kotlin.math.abs(value))
+                    }
+                    levelSamples += count
+                    if (SystemClock.elapsedRealtime() - levelAt >= 1000) {
+                        Log.d("VoiceRecognition", "Audio level: samples=$levelSamples rms=${kotlin.math.sqrt(levelSquares / levelSamples).toInt()} peak=$levelPeak")
+                        levelAt = SystemClock.elapsedRealtime()
+                        levelSquares = 0.0
+                        levelSamples = 0
+                        levelPeak = 0
+                    }
+                }
                 val samples = FloatArray(count) { index -> pcm[index] / 32768.0f }
                 stream.acceptWaveform(samples, SAMPLE_RATE)
 
@@ -201,6 +272,9 @@ class SherpaSpeechRecognizer(
             listener.onError(error)
         } finally {
             listening.set(false)
+            synchronized(recorderLock) {
+                if (activeRecorder === recorder) activeRecorder = null
+            }
             try {
                 recorder?.takeIf {
                     it.recordingState == AudioRecord.RECORDSTATE_RECORDING

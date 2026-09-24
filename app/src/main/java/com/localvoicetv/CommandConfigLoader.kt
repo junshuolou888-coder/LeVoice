@@ -150,6 +150,7 @@ object CommandConfigLoader {
             CommandEntry(
                 id = obj.getString("id"),
                 displayName = obj.getString("displayName"),
+                feedback = obj.optionalString("feedback"),
                 keywords = keywords,
                 endsWith = endsWith,
                 regex = regex,

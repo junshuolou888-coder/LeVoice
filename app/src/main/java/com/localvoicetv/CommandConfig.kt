@@ -32,6 +32,7 @@ data class CommandEntry(
     val priority: Int = 0,
     val excludeKeywords: List<String>? = null,
     val action: CommandAction,
+    val feedback: String? = null,
 )
 
 /**
